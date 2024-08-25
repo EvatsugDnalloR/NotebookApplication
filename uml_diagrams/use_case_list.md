@@ -16,52 +16,53 @@ User opens the application, and is able to perform all kinds of operations such 
 ### Actors 
 `User`, `File`
 ### Main Scenario
-1. User start the application
+1. User starts the application
 2. The application displays the notebook interface and shows that no notebook has been created
 3. User is able to create new Note Groups, and also create new Note Pages inside the Note Group for writing notes
 4. User is able to perform extra text editing features to the notes written
 5. User is able to undo or redo any operations performed
 6. User quit the program, and being asked if he wants to save the current changes or not.
 ### Alternative Scenario
-2. a.  If there is notebook file detected, then the app will load the notes from the file and shows the already existing notes
+2. a.  If there is a notebook file detected, then the app will load the notes from the file and shows the already existing notes
 ### Requirements
 `Basic Interactions`, `Text Editing Features`, `UndoRedo`, `Save to File`, `Export File`, `Import File`
 
 ## Basic Interactions
 ### Priority: `Must`
 ### Summary
-User is able to add new Note Groups, and add new Note Pages inside of a Group where user can write notes in.
+User is able to add new Note Groups, and add new Note Pages inside a Group where user can write notes in.
 ### Actors
 `User`
 ### Pre-condition
 Application is started
-### Post-consditions
+### Post-conditions
 New Note Groups and new Note Pages are added, and user is able to add texts inside of the Pages.
 ### Main Scenario
-1. User add a Note Group
-2. User add a Note Page inside the Note Group added
-3. User add any texts to the Note Page
+1. User adds a Note Group
+2. User adds a Note Page inside the Note Group added
+3. User adds any texts to the Note Page
 
 ## Text Editing Features
 ### Priority: `Should`
 ### Summary
-User is allowed to change fonts, font sizes, colors, state (bold, underlined and italic) of the texts, and is able to insert other symbols like bullet point, check boxes etc.
+User is allowed to change fonts, font sizes, colours, state (bold, underlined and italic) of the texts,
+and is able to insert other symbols like bullet point, check boxes, etc.
 ### Actors
 `User`
 ### Pre-conditions
 - Application is started
 - Note Pages have been created for user to add texts
 ### Post-condition
-The selected texts have been modified accroding to the editing operations performed.
+The selected texts have been modified according to the editing operations performed.
 ### Main Scenario
-1. User select some texts in the Note Page
-2. User perform editing operations on the selected texts
+1. User selects some texts in the Note Page
+2. User performs formatting operations on the selected texts
 3. Selected texts have been edited.
 ### Alternative Scenario
-1. a1. User select nothing (empty text)\
-a2. The edit operation does nothing
-2. a1. User insert other symbols such as bullet points or check boxes\
-a2. These symbols should be successfully inserted infront of the line of text selected
+1. a1. User selects nothing (empty text)\
+a2. The formatting operation does nothing
+2. a1. User inserts other symbols such as bullet points or checks boxes\
+a2. These symbols should be successfully inserted in front of the line of the text selected
 ### Exception Scenario
 - Trigger: no Note Page has been created yet
 ### Requirement
@@ -75,7 +76,7 @@ User is allowed to undo and redo all kinds of text editing operations and the ad
 `User`
 ### Pre-conditions
 - Application is started
-- There're some operations to undo or redo
+- There are some operations to undo or redo
 ### Post-condition
 The recent operation has been undone or redone.
 ### Main Scenario
@@ -102,20 +103,20 @@ User is able to save their current notebook to a file that can be read by the pr
 - Application is started
 - The file for storing the content of the notebook exists
 ### Post-condition
-All the content of the notebook have been stored to the file.
+All the content of the notebook has been stored to the file.
 ### Main Scenario
 1. User made some changes to the notebook content
 2. User trys to quit or close the program
 3. A window pops out to ask the user if he wants to save the current changes or not
-4. User choose 'yes' to save the notebook content to the local file and the program will be terminated
+4. User chooses 'yes' to save the notebook content to the local file and the program will be terminated
 ### Alternative Scenario
-2. a1. User pressed `Ctrl + S` or clicked the Save option throught the menu bar\
+2. a1. User pressed `Ctrl + S` or clicked the Save option through the menu bar\
 a2. The current notebook content has been saved to the local file\
-a3. User can exit the application without any pop out window
+a3. User can exit the application without any pop-out window
 <!-- 4 -->
-4. a. User choose 'no' to abancon the current changes, and the program will be terminated
+4. a. User chooses 'no' to abandon the current changes, and the program will be terminated
 ### Exception Scenario
-- Trigger: The file for storing the content of the notebook doesn't exists or corrupted when trying to save the changes
+- Trigger: The file for storing the content of the notebook doesn't exist or corrupted when trying to save the changes
 
 ## Export File
 ### Priority: `Could`
@@ -130,12 +131,12 @@ User is able to choose to export their notebook file to anywhere on the system (
 The file has been exported to the directory chosen by the user.
 ### Main Scenario
 1. User has saved all the changes to the notebook content
-2. User clicks Export option through the menu bar
-3. System asks the user for the directory to export (default at Download folder)
-4. User didn't change the export directory and the file has been successfully exported to the Download folder
+2. User clicks the Export option through the menu bar
+3. The System asks the user for the directory to export (default at Download folder)
+4. User didn't change the export directory, and the file has been successfully exported to the Download folder
 ### Alternative Scenario
 1. a1. User didn't save the changes but still went to click the Export option through the menu bar\
-a2. System will automatically save the current changes for the user\
+a2. The System will automatically save the current changes for the user\
 a3. continue by following step 3 in the Main Scenario
 <!-- 4 -->
 4. a1. User changes the export directory to his desired one\
@@ -157,8 +158,8 @@ User is able to choose to import their notebook file such that the application c
 ### Post-conditions
 The application loaded all the notebook content from the file imported, and replaced the existing file.
 ### Main Scenario
-1. User clicks Import option through the menu bar
-2. User choose the file to import
+1. User clicks the Import option through the menu bar
+2. User chooses the file to import
 3. The system loads all the notebook content from the file imported
 4. THe exising local file is replaced by the imported file for further saving changes
 ### Exception Scenario
