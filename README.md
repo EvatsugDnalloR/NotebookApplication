@@ -11,5 +11,5 @@ A java notebook application using javafx as gui framework
 ### Activity Diagrams
 [Activity Diagrams >>](uml_diagrams/activity_diagrams.md)
 
-### Class Diagram
-...
+### Class Diagram (not completed)
+![class_diagram](uml_diagrams/images/class_diagram.svg)
