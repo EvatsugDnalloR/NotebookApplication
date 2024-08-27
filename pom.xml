@@ -84,7 +84,8 @@
       <artifactId>junit-jupiter-engine</artifactId>
       <version>${junit.version}</version>
       <scope>test</scope>
-    </dependency>  </dependencies>
+    </dependency>
+  </dependencies>
 
   <build>
     <plugins>
@@ -95,6 +96,7 @@
         <configuration>
           <source>22</source>
           <target>22</target>
+            <compilerArgs>--enable-preview</compilerArgs>
         </configuration>
       </plugin>
       <plugin>
@@ -123,13 +125,19 @@
         <version>3.5.0</version>
         <configuration>
           <configLocation>google_checks.xml</configLocation>
-          <encoding>UTF-8</encoding>
           <consoleOutput>true</consoleOutput>
           <failsOnError>true</failsOnError>
           <failOnViolation>true</failOnViolation>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
           <linkXRef>false</linkXRef>
         </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>10.18.0</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <id>validate</id>

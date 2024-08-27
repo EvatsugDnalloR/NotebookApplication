@@ -8,6 +8,7 @@ module notebookapplication {
     requires net.synedra.validatorfx;
     requires org.kordamp.ikonli.javafx;
     requires eu.hansolo.tilesfx;
+    requires java.desktop;
 
     exports notebookapplication.gui;
     opens notebookapplication.gui to javafx.fxml;
