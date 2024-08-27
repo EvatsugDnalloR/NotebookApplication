@@ -15,7 +15,7 @@ public class TextEditing {
      * @param selectedText  the text to be styled
      * @return  the styled text with the specified colour
      */
-    public static String setColor(Colors colorEnum, String selectedText){
+    public static String setColor(Colors colorEnum, String selectedText) {
         return STR."[style=\"-fx-fill: \{colorEnum.color};\"]\{selectedText}[/style]";
     }
 
@@ -59,5 +59,4 @@ public class TextEditing {
     public static String setItalic(String selectedText) {
         return STR."[style=\"-fx-font-style: italic;\"\{selectedText}[/style]]";
     }
-
 }
