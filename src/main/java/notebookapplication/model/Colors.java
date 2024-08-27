@@ -1,10 +1,9 @@
 package notebookapplication.model;
 
 /**
- * A public enumerated class that contains all the strings
+ * A public enumerated class that contains strings
  *   of colours, which can be appended to the CSS style
- *   of colour setting in javafx, such as
- *   \code{-fx-fill: Colors.color}.
+ *   of colour setting in javafx, such as {@code -fx-fill: Colors.color}.
  */
 public enum Colors {
     RED("red"),

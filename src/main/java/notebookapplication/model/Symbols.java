@@ -1,5 +1,10 @@
 package notebookapplication.model;
 
+/**
+ * A public enumerated class that contains strings of
+ *   text editing symbols that can be inserted to other
+ *   strings.
+ */
 public enum Symbols {
     BULLET_POINT("•"),
     HALLOW_BULLET_POINT("◦"),
@@ -8,7 +13,7 @@ public enum Symbols {
     UNIVERSAL_BULLET_POINT("∙"),
     ARROW("➤"),
     STAR("★"),
-    CHECK_BOX("\\check_box");
+    CHECK_BOX("\\check_box"); // will be using built in javafx checkbox
 
     public final String symbol;
 

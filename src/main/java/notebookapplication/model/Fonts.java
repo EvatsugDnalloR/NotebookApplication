@@ -1,5 +1,10 @@
 package notebookapplication.model;
 
+/**
+ * A public enumerated class that contains strings of
+ *   fonts, which can be appended to the CSS style of
+ *   font setting in javafx, such as {@code -fx-font-family: Fonts.font}.
+ */
 public enum Fonts {
     ARIAL("Arial"),
     VERDANA("Verdana"),
