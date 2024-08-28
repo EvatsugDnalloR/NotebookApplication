@@ -5,7 +5,7 @@ package notebookapplication.model;
  * Provides methods to apply various styles to text such as
  *   colour, font, underline, bold, and italic.
  * Implemented by adding custom style tag to surround the text,
- *   such as {@code [style="..."]SomeText[/style]}.
+ *   such as {@code [style="..."]...[/style]}.
  */
 public class TextEditing {
     /**
