@@ -1,7 +1,6 @@
 package notebookapplication.model;
 
 import java.beans.PropertyChangeSupport;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
