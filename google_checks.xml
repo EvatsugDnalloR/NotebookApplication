@@ -32,6 +32,15 @@
   <module name="BeforeExecutionExclusionFileFilter">
     <property name="fileNamePattern" value="TextEditing\.java$"/>
   </module>
+  <module name="BeforeExecutionExclusionFileFilter">
+    <property name="fileNamePattern" value="NotePage\.java$"/>
+  </module>
+  <module name="BeforeExecutionExclusionFileFilter">
+    <property name="fileNamePattern" value="NotePageTest\.java$"/>
+  </module>
+  <module name="BeforeExecutionExclusionFileFilter">
+    <property name="fileNamePattern" value="NoteGroupTest\.java$"/>
+  </module>
   <!-- https://checkstyle.org/filters/suppressionfilter.html -->
   <module name="SuppressionFilter">
     <property name="file" value="${org.checkstyle.google.suppressionfilter.config}"
