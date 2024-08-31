@@ -139,6 +139,51 @@
           </dependency>
         </dependencies>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.10.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>aggregate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <aggregate>true</aggregate>
+          <source>11</source>
+          <reportOutputDirectory>${project.build.directory}/site/apidocs</reportOutputDirectory>
+          <!-- add custom tags for formal annotation -->
+          <tags>
+            <tag>
+              <name>pre</name>
+              <placement>cm</placement>
+              <head>Precondition:</head>
+            </tag>
+            <tag>
+              <name>modifies</name>
+              <placement>m</placement>
+              <head>Modifies:</head>
+            </tag>
+            <tag>
+              <name>post</name>
+              <placement>cm</placement>
+              <head>Postcondition:</head>
+            </tag>
+            <tag>
+              <name>bound</name>
+              <placement>m</placement>
+              <head>Bound:</head>
+            </tag>
+            <tag>
+              <name>inv</name>
+              <placement>tf</placement>
+              <head>Invariant:</head>
+            </tag>
+          </tags>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <repositories>
