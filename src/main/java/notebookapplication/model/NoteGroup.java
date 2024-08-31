@@ -8,23 +8,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
+ * Represents a group of note pages in the notebook application.
+ * This class extends {@link ModelObserver} and handles operations related to note pages
+ *      such as adding, deleting, and reordering pages.
+ * Calls {@code support.firePropertyChange} to notify observers about the changes.
  */
-public class NoteGroup extends ModelObserver{
+public class NoteGroup extends ModelObserver {
     /** The name of the note group. */
     private String groupName;
 
     /** The list that contains all the note pages in this note group. */
     private List<NotePage> notePages;
-
-    /**
-     * Containing the page names and content of all the note pages
-     *      inside {@code notePages} list.
-     * The content and page names should be updated simultaneously
-     *      when it is updated in the gui.
-     * Useful for saving file and exporting file functionalities.
-     */
-    private StringBuilder groupContent;
 
     /**
      * A default constructor for a NoteGroup when the page contents
@@ -36,7 +30,6 @@ public class NoteGroup extends ModelObserver{
     NoteGroup(String groupName) {
         this.groupName = groupName;
         notePages = new ArrayList<>();
-        groupContent = new StringBuilder();
         support = new PropertyChangeSupport(this);  // initialise the observer
     }
 
@@ -57,7 +50,6 @@ public class NoteGroup extends ModelObserver{
     NoteGroup(String groupName, final Scanner scanner) {
         this.groupName = groupName;
         notePages = new ArrayList<>();
-        groupContent = new StringBuilder();
         support = new PropertyChangeSupport(this);
 
         if (scanner == null) {
@@ -83,9 +75,6 @@ public class NoteGroup extends ModelObserver{
             }
 
             notePages.add(new NotePage(matcher.group(1), matcher.group(2)));
-            // add
-            groupContent.append(STR."[page=\"\{notePages.getLast().getPageName()}\"]")
-                    .append(STR."\{notePages.getLast().getContent()}[/page]");
             lastMatchEnd = matcher.end();
         }
 
@@ -96,19 +85,28 @@ public class NoteGroup extends ModelObserver{
     }
 
     /**
+     * Adds a new note page to the note group.
      *
-     * @param notePage
+     * @param notePage  the NotePage to be added
+     * @pre {@code notePage != null}
+     * @throws NullPointerException if {@code notePage == null}
      */
     public void addPage(NotePage notePage) {
+        if (notePage == null) {
+            throw new NullPointerException("NotePage to be added cannot be null");
+        }
+
         var oldNotePages = this.notePages;
         notePages.add(notePage);
-        groupContent.append(STR."[page=\"\{notePage.getPageName()}\"]\{notePage.getContent()}[/page]");
         support.firePropertyChange("newPage", oldNotePages, notePages);
     }
 
     /**
+     * Deletes a note page from the note group at the specified position.
      *
-     * @param position
+     * @param position  the position of the NotePage to be deleted
+     * @pre {@code position \in {0, ..., notePages.size() - 1}}
+     * @throws IllegalArgumentException if the precondition is violated
      */
     public void deletePage(int position) {
         if (position < 0 || position >= notePages.size()) {
@@ -116,74 +114,53 @@ public class NoteGroup extends ModelObserver{
         }
 
         var oldNotePages = this.notePages;
-        NotePage toBeDeleted = notePages.get(position);
         notePages.remove(position);
-
-        // To remove the corresponding content from groupContent
-        String pageTag = STR."[page=\"\{toBeDeleted.getPageName()}\"]\{toBeDeleted.getContent()}[/page]";
-
-        // Find the correct occurrence of the pageTag, which is {position + 1}-th page tag
-        int startIndex = -1;
-        for (int i = 1; i < position; i++) {
-            startIndex = groupContent.indexOf(pageTag, startIndex + 1);
-            if (startIndex == -1) {
-                throw new IllegalStateException("Page tag not found in groupContent");
-            }
-        }
-
-        // Delete the correct occurrence of the pageTag
-        groupContent.delete(startIndex, startIndex + pageTag.length());
         support.firePropertyChange("deletePage", oldNotePages, notePages);
     }
 
     /**
+     * Changes the order of the note pages in the note group.
      *
-     * @param currentPosition
-     * @param newPosition
+     * @param currentPosition   the current position of the NotePage to be moved
+     * @param newPosition   the new position of the NotePage
+     * @pre {@code currentPosition, newPosition \in {0, ..., notePages.size() - 1}}
+     * @throws IllegalArgumentException if the precondition is violated
      */
     public void changePagesOrder(int currentPosition, int newPosition) {
-        if (currentPosition < 0 || currentPosition >= notePages.size() ||
-                newPosition < 0 || newPosition >= notePages.size()) {
+        if (currentPosition < 0 || currentPosition >= notePages.size()
+                || newPosition < 0 || newPosition >= notePages.size()) {
             throw new IllegalArgumentException("Position is out of bounds");
         }
 
         var oldNotePages = this.notePages;
-
-        // Get the NotePage to be moved
-        NotePage toBeMoved = notePages.remove(currentPosition);
+        NotePage toBeMoved = notePages.remove(currentPosition); // Get the NotePage to be moved
         notePages.add(newPosition, toBeMoved);
-
-        // Rebuild the groupContent based on the new order of notePages
-        groupContent = new StringBuilder(); // Clear the existing content
-        for (var page : notePages) {
-            groupContent.append(STR."[page=\"\{page.getPageName()}\"]\{page.getContent()}[/page]");
-        }
-
-        // Notify the observer
         support.firePropertyChange("changeOrder", oldNotePages, notePages);
     }
 
+    // getter of the group name
     public String getGroupName() {
         return groupName;
     }
 
+    /**
+     * Setter for the groupName.
+     * Replace the groupName with the new one, and also need to notify the observer.
+     *
+     * @param groupName the new groupName
+     */
     public void setGroupName(String groupName) {
+        support.firePropertyChange("groupName", this.groupName, groupName);
         this.groupName = groupName;
     }
 
+    // getter of the notePages list
     public List<NotePage> getNotePages() {
         return notePages;
     }
 
+    // setter of the notePages list
     public void setNotePages(List<NotePage> notePages) {
         this.notePages = notePages;
-    }
-
-    public String getGroupContent() {
-        return groupContent.toString();
-    }
-
-    public void setGroupContent(String groupContent) {
-        this.groupContent = new StringBuilder(groupContent);
     }
 }
