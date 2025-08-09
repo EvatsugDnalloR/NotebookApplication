@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.text.MessageFormat;
+
 /**
  * Unit tests for the {@link NotePage} class.
  * This class tests various functionalities of the NotePage class,
@@ -54,11 +56,12 @@ public class NotePageTest {
 
         notePage.insertContent(notePage.getContent().length(), toBeInserted[0]);
         System.out.println(notePage.getContent());
-        assertEquals(STR."\{CONTENT}\{toBeInserted[0]}", notePage.getContent());
+        assertEquals(MessageFormat.format("{0}{1}", CONTENT, toBeInserted[0]), notePage.getContent());
 
         notePage.insertContent(notePage.getContent().length(), toBeInserted[1]);
         System.out.println(notePage.getContent());
-        assertEquals(STR."\{CONTENT}\{toBeInserted[0]}\{toBeInserted[1]}", notePage.getContent());
+        assertEquals(MessageFormat.format("{0}{1}{2}", CONTENT, toBeInserted[0], toBeInserted[1]),
+                notePage.getContent());
     }
 
     /**
@@ -74,14 +77,15 @@ public class NotePageTest {
             notePage.insertContent(notePage.getContent().length(), String.valueOf(character));
         }
         System.out.println(notePage.getContent());
-        assertEquals(STR."\{CONTENT}\{inserted}", notePage.getContent());
+        assertEquals(MessageFormat.format("{0}{1}", CONTENT, inserted), notePage.getContent());
 
         for (int i = 0; i < toBeInserted.length; i++) {
             notePage.insertContent(i, String.valueOf(toBeInserted[i]));
         }
         notePage.insertContent(inserted.length(), "\n");
         System.out.println(notePage.getContent());
-        assertEquals(STR."\{inserted}\n\{CONTENT}\{inserted}", notePage.getContent());
+        assertEquals(MessageFormat.format("{0}\n{1}{2}", inserted, CONTENT, inserted),
+                notePage.getContent());
     }
 
     /**
@@ -98,9 +102,9 @@ public class NotePageTest {
                 toBeInserted);
         System.out.println(notePage.getContent());
         assertEquals(
-                STR."""
-                        \{toBeInserted}This is \{toBeInserted}the first line.
-                        This is a \{toBeInserted}second line...""",
+                MessageFormat.format("""
+                        {0}This is {1}the first line.
+                        This is a {2}second line...""", toBeInserted, toBeInserted, toBeInserted),
                 notePage.getContent()
         );
     }
@@ -175,7 +179,8 @@ public class NotePageTest {
         String replacement = "replaced by this string";
         notePage.replaceContent(8, 31, replacement);
         System.out.println(notePage.getContent());
-        assertEquals(STR."This is \{replacement} a second line...", notePage.getContent());
+        assertEquals(MessageFormat.format("This is {0} a second line...", replacement),
+                notePage.getContent());
     }
 
     /**
@@ -216,7 +221,8 @@ public class NotePageTest {
     public void insertSingleSymbol() {
         notePage.insertSymbol(0, Symbols.BULLET_POINT);
         System.out.println(notePage.getContent());
-        assertEquals(STR."\{Symbols.BULLET_POINT.symbol}  \{CONTENT}", notePage.getContent());
+        assertEquals(MessageFormat.format("{0}  {1}", Symbols.BULLET_POINT.symbol, CONTENT),
+                notePage.getContent());
     }
 
     /**
@@ -231,9 +237,10 @@ public class NotePageTest {
         notePage.insertSymbol(1, Symbols.STAR);
         System.out.println(notePage.getContent());
         assertEquals(
-                STR."\{Symbols.CHECK_BOX.symbol}  \{Symbols.SQUARE_BULLET_POINT.symbol}  " +
-                STR."This is the first line.\n\{Symbols.STAR.symbol}  \{Symbols.ARROW.symbol}  " +
-                "This is a second line...", notePage.getContent());
+                MessageFormat.format("{0}  {1}  This is the first line.\n{2}  {3}  " +
+                "This is a second line...", Symbols.CHECK_BOX.symbol, Symbols.SQUARE_BULLET_POINT.symbol,
+                        Symbols.STAR.symbol, Symbols.ARROW.symbol),
+                notePage.getContent());
     }
 
     /**
@@ -264,9 +271,9 @@ public class NotePageTest {
         notePage.formatting(0, 1,
                 () -> TextEditing.setFont(Fonts.MS_YAHEI, notePage.getContent().substring(0, 1)));
         System.out.println(notePage.getContent());
-        assertEquals(STR."""
-        [style="-fx-font-family: \{Fonts.MS_YAHEI.font};"]T[/style]his is the first line.
-        This is a second line...""", notePage.getContent());
+        assertEquals(MessageFormat.format("""
+        [style="-fx-font-family: {0};"]T[/style]his is the first line.
+        This is a second line...""", Fonts.MS_YAHEI.font), notePage.getContent());
     }
 
     /**
@@ -282,10 +289,11 @@ public class NotePageTest {
                 () -> TextEditing.setColor(Colors.BLUE,
                         notePage.getContent().substring(notePage.getContent().length() - 24)));
         System.out.println(notePage.getContent());
-        assertEquals(STR.
+        assertEquals(MessageFormat.format(
                 """
-                [style="-fx-fill: \{Colors.RED.color};"]This is the[/style] first line.
-                [style="-fx-fill: \{Colors.BLUE.color};"]This is a second line...[/style]""",
+                [style="-fx-fill: {0};"]This is the[/style] first line.
+                [style="-fx-fill: {1};"]This is a second line...[/style]""",
+                        Colors.RED.color, Colors.BLUE.color),
                 notePage.getContent());
     }
 

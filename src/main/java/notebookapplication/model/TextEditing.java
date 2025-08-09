@@ -1,5 +1,7 @@
 package notebookapplication.model;
 
+import java.text.MessageFormat;
+
 /**
  * Utility class for text editing operations.
  * Provides methods to apply various styles to text such as
@@ -16,7 +18,8 @@ public class TextEditing {
      * @return  the styled text with the specified colour
      */
     public static String setColor(Colors colorEnum, String selectedText) {
-        return STR."[style=\"-fx-fill: \{colorEnum.color};\"]\{selectedText}[/style]";
+        return MessageFormat.format("[style=\"-fx-fill: {0};\"]{1}[/style]",
+                colorEnum.color, selectedText);
     }
 
     /**
@@ -27,7 +30,9 @@ public class TextEditing {
      * @return  the styled text with the specified font
      */
     public static String setFont(Fonts fontEnum, String selectedText) {
-        return STR."[style=\"-fx-font-family: \{fontEnum.font};\"]\{selectedText}[/style]";
+//        return STR."[style=\"-fx-font-family: \{fontEnum.font};\"]\{selectedText}[/style]";
+        return MessageFormat.format("[style=\"-fx-font-family: {0};\"]{1}[/style]",
+                fontEnum.font, selectedText);
     }
 
     /**
@@ -37,7 +42,7 @@ public class TextEditing {
      * @return  the styled text with underline
      */
     public static String setUnderlined(String selectedText) {
-        return STR."[style=\"-fx-underline: true;\"]\{selectedText}[/style]";
+        return MessageFormat.format("[style=\"-fx-underline: true;\"]{0}[/style]", selectedText);
     }
 
     /**
@@ -47,7 +52,7 @@ public class TextEditing {
      * @return  the styled text with bold font weight
      */
     public static String setBold(String selectedText) {
-        return STR."[style=\"-fx-font-weight: bold;\"]\{selectedText}[/style]";
+        return MessageFormat.format("[style=\"-fx-font-weight: bold;\"]{0}[/style]", selectedText);
     }
 
     /**
@@ -57,6 +62,6 @@ public class TextEditing {
      * @return  the styled text with italic font style
      */
     public static String setItalic(String selectedText) {
-        return STR."[style=\"-fx-font-style: italic;\"\{selectedText}[/style]]";
+        return MessageFormat.format("[style=\"-fx-font-style: italic;\"{0}[/style]]", selectedText);
     }
 }

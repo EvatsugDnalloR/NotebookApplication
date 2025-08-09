@@ -1,6 +1,7 @@
 package notebookapplication.model;
 
 import java.beans.PropertyChangeSupport;
+import java.text.MessageFormat;
 import java.util.regex.Pattern;
 
 /**
@@ -43,7 +44,8 @@ public class NotePage extends ModelObserver {
     public void insertContent(int caretPosition, String content) {
         if (caretPosition < 0 || caretPosition > this.content.length()) {
             throw new IllegalArgumentException(
-                    STR."Caret position \{caretPosition} is out of bounds");
+                MessageFormat.format("Caret position {0} is out of bounds", caretPosition)
+            );
         }
 
         String oldContent = getContent();
@@ -123,10 +125,10 @@ public class NotePage extends ModelObserver {
 
         if (lineNum < 0 || lineNum >= lines.length) {
             throw new IllegalArgumentException(
-                    STR."Line number \{lineNum} is out of bounds");
+                    MessageFormat.format("Line number {0} is out of bounds", lineNum));
         }
 
-        lines[lineNum] = STR."\{symbolEnum.symbol}  \{lines[lineNum]}";
+        lines[lineNum] = MessageFormat.format("{0}  {1}", symbolEnum.symbol, lines[lineNum]);
         content = new StringBuilder(String.join("\n", lines));
 
         // notify the observer with Property Name "symbol"

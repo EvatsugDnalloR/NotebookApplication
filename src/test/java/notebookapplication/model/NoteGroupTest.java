@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.text.MessageFormat;
 import java.util.Scanner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,7 +67,7 @@ public class NoteGroupTest {
                         new Scanner("[page=\"Page 1\"][/page][page=\"Page 2\"\"][/page]")));
             assertThrows(IllegalArgumentException.class,
                     () -> noteGroup = new NoteGroup("Default NoteGroup",
-                        new Scanner(STR."\{INPUT}some other garbage information[/page]")));
+                        new Scanner(MessageFormat.format("{0}some other garbage information[/page]", INPUT))));
             assertThrows(IllegalArgumentException.class,
                     () -> noteGroup = new NoteGroup("Default NoteGroup",
                         new Scanner("[page=\"nearly correct\"][page]")));
@@ -98,13 +99,13 @@ public class NoteGroupTest {
         // Build the actual content string
         StringBuilder builder = new StringBuilder();
         noteGroup.getNotePages().forEach(notePage -> builder.append(
-                STR."[page=\"\{notePage.getPageName()}\"]\{notePage.getContent()}[/page]"
+                MessageFormat.format("[page=\"{0}\"]{1}[/page]",
+                        notePage.getPageName(), notePage.getContent())
         ));
-
-        assertEquals(STR."\{INPUT}[page=\"Normal Name\"]Normal content...[/page]"
+        assertEquals(MessageFormat.format("{0}[page=\"Normal Name\"]Normal content...[/page]"
                         + "[page=\"Not normal name\"]Not normal content...[/page]"
                         + "[page=\"Formatted note\"][style=\"-fx-fill: "
-                        + STR."\{Colors.BLACK.color};\"]some text here...[/style][/page]",
+                        + "{1};\"]some text here...[/style][/page]", INPUT, Colors.BLACK.color),
                 builder.toString()
         );
     }
@@ -129,7 +130,8 @@ public class NoteGroupTest {
         // Build the actual content string after deletion
         StringBuilder builder = new StringBuilder();
         noteGroup.getNotePages().forEach(notePage -> builder.append(
-                STR."[page=\"\{notePage.getPageName()}\"]\{notePage.getContent()}[/page]"
+                MessageFormat.format("[page=\"{0}\"]{1}[/page]",
+                        notePage.getPageName(), notePage.getContent())
         ));
 
         assertEquals(
@@ -178,7 +180,8 @@ public class NoteGroupTest {
         // Build the actual content string after reordering
         StringBuilder builder = new StringBuilder();
         noteGroup.getNotePages().forEach(notePage -> builder.append(
-                STR."[page=\"\{notePage.getPageName()}\"]\{notePage.getContent()}[/page]"
+                MessageFormat.format("[page=\"{0}\"]{1}[/page]",
+                        notePage.getPageName(), notePage.getContent())
         ));
 
         assertEquals("[page=\"Page with formats\"][style=\"-fx-underline: true;\"]"
