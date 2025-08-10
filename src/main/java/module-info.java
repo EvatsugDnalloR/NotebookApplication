@@ -10,6 +10,9 @@ module notebookapplication {
     requires eu.hansolo.tilesfx;
     requires java.desktop;
 
+    requires org.fxmisc.richtext;
+    requires reactfx;
+
     exports notebookapplication.gui;
     opens notebookapplication.gui to javafx.fxml;
 }
