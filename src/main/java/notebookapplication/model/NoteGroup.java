@@ -9,11 +9,11 @@ import java.util.regex.Pattern;
 
 /**
  * Represents a group of note pages in the notebook application.
- * This class extends {@link ModelObserver} and handles operations related to note pages
+ * This class extends {@link ModelSubject} and handles operations related to note pages
  *      such as adding, deleting, and reordering pages.
  * Calls {@code support.firePropertyChange} to notify observers about the changes.
  */
-public class NoteGroup extends ModelObserver {
+public class NoteGroup extends ModelSubject {
     /** The name of the note group. */
     private String groupName;
 

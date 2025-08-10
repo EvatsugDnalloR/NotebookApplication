@@ -6,12 +6,12 @@ import java.util.regex.Pattern;
 
 /**
  * Represents a note page in a note group in the notebook application.
- * This class extends {@link ModelObserver} and handles all the text operations
+ * This class extends {@link ModelSubject} and handles all the text operations
  *   such as inserting characters or pasting strings into the note page, deleting
  *   one character or strings selected, and also the string replacement.
  * Calls {@code support.firePropertyChange} to notify observers about the changes.
  */
-public class NotePage extends ModelObserver {
+public class NotePage extends ModelSubject {
     /** The name of this note page to be shown in the gui. */
     private String pageName;
 

@@ -7,7 +7,7 @@ import java.beans.PropertyChangeSupport;
  * Abstract class that provides support for property change listeners.
  * This class is part of the Observer design pattern implementation.
  */
-public abstract class ModelObserver {
+public abstract class ModelSubject {
     /** Support for managing property change listeners. */
     protected PropertyChangeSupport support;
 
