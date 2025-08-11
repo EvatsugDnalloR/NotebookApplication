@@ -5,9 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-
-public class Main extends Application {
+public class MainFrame extends Application {
     private Controller controller;
 
     public static void main(String[] args) {
@@ -17,7 +15,7 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         controller = new Controller();
-        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(MainFrame.class.getResource("notebookapplication_view.fxml"));
         Scene scene = new Scene(fxmlLoader.load());
         stage.setTitle("Hello!");
         stage.setScene(scene);
