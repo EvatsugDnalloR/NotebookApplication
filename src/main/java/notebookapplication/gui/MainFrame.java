@@ -15,7 +15,7 @@ public class MainFrame extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         controller = new Controller();
-        FXMLLoader fxmlLoader = new FXMLLoader(MainFrame.class.getResource("notebookapplication_view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(MainFrame.class.getResource("MainFrame-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load());
         stage.setTitle("Hello!");
         stage.setScene(scene);

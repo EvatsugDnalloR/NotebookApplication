@@ -47,8 +47,8 @@ public class Controller implements Initializable {  // Implement Initializable
         defaultPage.setToggleGroup(notePages);
         defaultGroup.setSelected(true);
         defaultPage.setSelected(true);
-        setUpDeletionMenu(defaultGroup, "Group");
-        setUpDeletionMenu(defaultPage, "Page");
+        setUpNewPageGroup(defaultGroup, "Group");
+        setUpNewPageGroup(defaultPage, "Page");
     }
 
     private void setupTextHandling() {
@@ -78,19 +78,21 @@ public class Controller implements Initializable {  // Implement Initializable
         ToggleButton newGroup = new ToggleButton("Group " + groupCount);
 
         // Add context menu for deletion
-        setUpDeletionMenu(newGroup, "Group");
+        setUpNewPageGroup(newGroup, "Group");
 
         // Add before the "+" button
         groupBar.getChildren().add(groupBar.getChildren().size() - 1, newGroup);
     }
 
-    private void setUpDeletionMenu(ToggleButton newButton, String groupOrPage) {
+    private void setUpNewPageGroup(ToggleButton newButton, String groupOrPage) {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem deleteItem = new MenuItem("Delete " + groupOrPage);
         if  (groupOrPage.equals("Group")) {
             deleteItem.setOnAction(e -> deleteGroup(newButton));
+            newButton.setToggleGroup(noteGroup);
         } else if (groupOrPage.equals("Page")) {
             deleteItem.setOnAction(e -> deletePage(newButton));
+            newButton.setToggleGroup(notePages);
         } else {
             throw new IllegalArgumentException("Invalid group or page");
         }
@@ -109,7 +111,7 @@ public class Controller implements Initializable {  // Implement Initializable
         ToggleButton newPage = new ToggleButton("Page " + pageCount);
 
         // Add context menu for deletion
-        setUpDeletionMenu(newPage, "Page");
+        setUpNewPageGroup(newPage, "Page");
 
         // Add before the "+" button
         pageBar.getChildren().add(pageBar.getChildren().size() - 1, newPage);
