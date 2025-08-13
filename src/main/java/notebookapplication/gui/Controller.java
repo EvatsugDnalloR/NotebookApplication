@@ -8,6 +8,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.fxmisc.richtext.InlineCssTextArea;
+import javafx.scene.paint.Color;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -120,5 +121,45 @@ public class Controller implements Initializable {  // Implement Initializable
     private void deletePage(ToggleButton pageButton) {
         pageBar.getChildren().remove(pageButton);
         pageCount--;
+    }
+
+    // Helper method to apply a new style to selected text
+    @FXML
+    private void applyStyle() {
+        if (textArea.getSelection().getLength() > 0) {
+            String existingStyle = textArea.getStyleAtPosition(textArea.getSelection().getStart());
+            String combinedStyle = combineStyles(existingStyle, "-fx-fill: " + toHex(Color.RED) + ";");
+
+            textArea.setStyle(
+                    textArea.getSelection().getStart(),
+                    textArea.getSelection().getEnd(),
+                    combinedStyle
+            );
+        }
+    }
+
+    // Combine existing style with new style
+    private String combineStyles(String existing, String additional) {
+        if (existing == null || existing.isEmpty()) {
+            return additional;
+        }
+
+        // Remove conflicting properties
+        String[] properties = additional.split(";");
+        for (String prop : properties) {
+            String key = prop.split(":")[0].trim();
+            existing = existing.replaceAll(key + "\\s*:[^;]*;?", "");
+        }
+
+        // Combine styles
+        return (existing.endsWith(";") ? existing : existing + ";") + additional;
+    }
+
+    // Convert Color to hex format
+    private String toHex(Color color) {
+        return String.format("#%02X%02X%02X",
+                (int)(color.getRed() * 255),
+                (int)(color.getGreen() * 255),
+                (int)(color.getBlue() * 255));
     }
 }
