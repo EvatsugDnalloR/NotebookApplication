@@ -17,7 +17,7 @@ User opens the application, and is able to perform all kinds of operations such 
 `User`, `File`
 ### Main Scenario
 1. User starts the application
-2. The application displays the notebook interface and shows that no notebook has been created
+2. The application displays the notebook interface and shows a default Note Page inside a default Note Group
 3. User is able to create new Note Groups, and also create new Note Pages inside the Note Group for writing notes
 4. User is able to perform extra text editing features to the notes written
 5. User is able to undo or redo any operations performed
@@ -45,7 +45,7 @@ New Note Groups and new Note Pages are added, and user is able to add texts insi
 ## Text Editing Features
 ### Priority: `Should`
 ### Summary
-User is allowed to change fonts, font sizes, colours, state (bold, underlined and italic) of the texts,
+User is allowed to change fonts, font sizes, colours, style (bold, underlined and italic) of the texts,
 and is able to insert other symbols like bullet point, check boxes, etc.
 ### Actors
 `User`
@@ -93,10 +93,12 @@ a3. The most recent undone operation has been redone
 ### Requirements:
 `Basic Interactions`, `Text Editing Features`
 
-## Save to File
+## Real-time Saving
 ### Priority: `Should`
 ### Summary
-User is able to save their current notebook to a file that can be read by the program to initialise the notebook app while startup, either manual saving during program running or will be asked while exiting the program if notes not saved.
+After the application launched, it detects changes every 5 seconds, 
+and updates the notebook saving file if there is a change. Furthermore, when user quits the app,
+the app should perform another check and saving.
 ### Actors
 `User`, `File`
 ### Pre-conditions
@@ -105,16 +107,9 @@ User is able to save their current notebook to a file that can be read by the pr
 ### Post-condition
 All the content of the notebook has been stored to the file.
 ### Main Scenario
-1. User made some changes to the notebook content
-2. User trys to quit or close the program
-3. A window pops out to ask the user if he wants to save the current changes or not
-4. User chooses 'yes' to save the notebook content to the local file and the program will be terminated
-### Alternative Scenario
-2. a1. User pressed `Ctrl + S` or clicked the Save option through the menu bar\
-a2. The current notebook content has been saved to the local file\
-a3. User can exit the application without any pop-out window
-<!-- 4 -->
-4. a. User chooses 'no' to abandon the current changes, and the program will be terminated
+1. The application is launched and the 5-second counter is started
+2. The 5-second interval is reached, the app performs a saving automatically
+3. User quits the app, and the app saves all the current contents to the file before closing
 ### Exception Scenario
 - Trigger: The file for storing the content of the notebook doesn't exist or corrupted when trying to save the changes
 

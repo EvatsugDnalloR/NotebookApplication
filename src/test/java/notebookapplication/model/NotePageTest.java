@@ -212,54 +212,54 @@ public class NotePageTest {
         });
     }
 
-    /**
-     * Tests inserting a symbol at the beginning of a line.
-     * Verifies that the symbol is correctly inserted to the front of the specified line
-     *      with two spaces separating the symbol and the first character of the line.
-     */
-    @Test
-    public void insertSingleSymbol() {
-        notePage.insertSymbol(0, Symbols.BULLET_POINT);
-        System.out.println(notePage.getContent());
-        assertEquals(MessageFormat.format("{0}  {1}", Symbols.BULLET_POINT.symbol, CONTENT),
-                notePage.getContent());
-    }
+//    /**
+//     * Tests inserting a symbol at the beginning of a line.
+//     * Verifies that the symbol is correctly inserted to the front of the specified line
+//     *      with two spaces separating the symbol and the first character of the line.
+//     */
+//    @Test
+//    public void insertSingleSymbol() {
+//        notePage.insertSymbol(0, Symbols.BULLET_POINT);
+//        System.out.println(notePage.getContent());
+//        assertEquals(MessageFormat.format("{0}  {1}", Symbols.BULLET_POINT.symbol, CONTENT),
+//                notePage.getContent());
+//    }
 
-    /**
-     * Tests inserting multiple symbols at various lines.
-     * For each line, the last inserted symbol should be at the most front position of the line.
-     */
-    @Test
-    public void insertMultipleSymbols() {
-        notePage.insertSymbol(0, Symbols.SQUARE_BULLET_POINT);
-        notePage.insertSymbol(0, Symbols.CHECK_BOX);
-        notePage.insertSymbol(1, Symbols.ARROW);
-        notePage.insertSymbol(1, Symbols.STAR);
-        System.out.println(notePage.getContent());
-        assertEquals(
-                MessageFormat.format("{0}  {1}  This is the first line.\n{2}  {3}  " +
-                "This is a second line...", Symbols.CHECK_BOX.symbol, Symbols.SQUARE_BULLET_POINT.symbol,
-                        Symbols.STAR.symbol, Symbols.ARROW.symbol),
-                notePage.getContent());
-    }
-
-    /**
-     * Tests inserting symbols with invalid line numbers.
-     * Verifies that an IllegalArgumentException is thrown for invalid line numbers.
-     */
-    @Test
-    public void insertSymbolException() {
-        assertAll(() -> {
-            assertThrows(IllegalArgumentException.class,
-                    () -> notePage.insertSymbol(-1, Symbols.STAR));
-            assertThrows(IllegalArgumentException.class,
-                    () -> notePage.insertSymbol(-10, Symbols.CHECK_BOX));
-            assertThrows(IllegalArgumentException.class,
-                    () -> notePage.insertSymbol(2, Symbols.SQUARE_BULLET_POINT));
-            assertThrows(IllegalArgumentException.class,
-                    () -> notePage.insertSymbol(20, Symbols.HALLOW_BULLET_POINT));
-        });
-    }
+//    /**
+//     * Tests inserting multiple symbols at various lines.
+//     * For each line, the last inserted symbol should be at the most front position of the line.
+//     */
+//    @Test
+//    public void insertMultipleSymbols() {
+//        notePage.insertSymbol(0, Symbols.SQUARE_BULLET_POINT);
+//        notePage.insertSymbol(0, Symbols.CHECK_BOX);
+//        notePage.insertSymbol(1, Symbols.ARROW);
+//        notePage.insertSymbol(1, Symbols.STAR);
+//        System.out.println(notePage.getContent());
+//        assertEquals(
+//                MessageFormat.format("{0}  {1}  This is the first line.\n{2}  {3}  " +
+//                "This is a second line...", Symbols.CHECK_BOX.symbol, Symbols.SQUARE_BULLET_POINT.symbol,
+//                        Symbols.STAR.symbol, Symbols.ARROW.symbol),
+//                notePage.getContent());
+//    }
+//
+//    /**
+//     * Tests inserting symbols with invalid line numbers.
+//     * Verifies that an IllegalArgumentException is thrown for invalid line numbers.
+//     */
+//    @Test
+//    public void insertSymbolException() {
+//        assertAll(() -> {
+//            assertThrows(IllegalArgumentException.class,
+//                    () -> notePage.insertSymbol(-1, Symbols.STAR));
+//            assertThrows(IllegalArgumentException.class,
+//                    () -> notePage.insertSymbol(-10, Symbols.CHECK_BOX));
+//            assertThrows(IllegalArgumentException.class,
+//                    () -> notePage.insertSymbol(2, Symbols.SQUARE_BULLET_POINT));
+//            assertThrows(IllegalArgumentException.class,
+//                    () -> notePage.insertSymbol(20, Symbols.HALLOW_BULLET_POINT));
+//        });
+//    }
 
     /**
      * Tests formatting a single character.

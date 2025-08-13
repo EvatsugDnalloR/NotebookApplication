@@ -12,6 +12,9 @@ import java.util.regex.Pattern;
  * Calls {@code support.firePropertyChange} to notify observers about the changes.
  */
 public class NotePage extends ModelSubject {
+    /** The id of this note page to be recognised by its belonging NoteGroup. */
+    private int pageID;
+
     /** The name of this note page to be shown in the gui. */
     private String pageName;
 
@@ -106,34 +109,34 @@ public class NotePage extends ModelSubject {
         support.firePropertyChange("replace", oldContent, getContent());
     }
 
-    /**
-     * Inserts a symbol to the front of a chosen line of string.
-     * Handles the case where user presses the button to insert some special symbols
-     *   such as bullet points or checkboxes, etc.
-     *
-     * @param lineNum   the line number where the symbol will be inserted
-     * @param symbolEnum    the enum containing the symbol to be inserted
-     * @pre {@code lineNum \in {0, ..., lines.length - 1}}
-     * @throws IllegalArgumentException if {@code lineNum} is out of bounds of {@code lines}
-     * @post    {@code symbolEnum.symbol} is inserted to the front of the chosen line
-     *      with two spaces between the symbol and the start of the text,
-     *      while the other lines are not modified
-     */
-    public void insertSymbol(int lineNum, Symbols symbolEnum) {
-        String oldContent = getContent();
-        String[] lines = content.toString().split("\n");
-
-        if (lineNum < 0 || lineNum >= lines.length) {
-            throw new IllegalArgumentException(
-                    MessageFormat.format("Line number {0} is out of bounds", lineNum));
-        }
-
-        lines[lineNum] = MessageFormat.format("{0}  {1}", symbolEnum.symbol, lines[lineNum]);
-        content = new StringBuilder(String.join("\n", lines));
-
-        // notify the observer with Property Name "symbol"
-        support.firePropertyChange("symbol", oldContent, getContent());
-    }
+//    /**
+//     * Inserts a symbol to the front of a chosen line of string.
+//     * Handles the case where user presses the button to insert some special symbols
+//     *   such as bullet points or checkboxes, etc.
+//     *
+//     * @param lineNum   the line number where the symbol will be inserted
+//     * @param symbolEnum    the enum containing the symbol to be inserted
+//     * @pre {@code lineNum \in {0, ..., lines.length - 1}}
+//     * @throws IllegalArgumentException if {@code lineNum} is out of bounds of {@code lines}
+//     * @post    {@code symbolEnum.symbol} is inserted to the front of the chosen line
+//     *      with two spaces between the symbol and the start of the text,
+//     *      while the other lines are not modified
+//     */
+//    public void insertSymbol(int lineNum, Symbols symbolEnum) {
+//        String oldContent = getContent();
+//        String[] lines = content.toString().split("\n");
+//
+//        if (lineNum < 0 || lineNum >= lines.length) {
+//            throw new IllegalArgumentException(
+//                    MessageFormat.format("Line number {0} is out of bounds", lineNum));
+//        }
+//
+//        lines[lineNum] = MessageFormat.format("{0}  {1}", symbolEnum.symbol, lines[lineNum]);
+//        content = new StringBuilder(String.join("\n", lines));
+//
+//        // notify the observer with Property Name "symbol"
+//        support.firePropertyChange("symbol", oldContent, getContent());
+//    }
 
     /**
      * Replace the selected string with the same string but formatted with the

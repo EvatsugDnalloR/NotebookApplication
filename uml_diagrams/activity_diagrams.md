@@ -21,8 +21,8 @@
 ## UndoRedo
 ![undoredo](images/activity_diagrams/undoredo.svg)
 
-## Save to File
-![save_to_file](images/activity_diagrams/save_to_file.svg)
+## Real-time Saving
+![save_to_file](images/activity_diagrams/real_time_saving.svg)
 
 ## Export File
 ![export_file](images/activity_diagrams/export_file.svg)
