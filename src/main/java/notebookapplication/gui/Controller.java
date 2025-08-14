@@ -1,165 +1,95 @@
 package notebookapplication.gui;
 
-import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.util.Duration;
+import notebookapplication.model.NoteFacade;
+import notebookapplication.model.NotePage;
+import notebookapplication.model.EventPropertyNameEnum;
 import org.fxmisc.richtext.InlineCssTextArea;
-import javafx.scene.paint.Color;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class Controller implements Initializable {  // Implement Initializable
-    @FXML
-    private InlineCssTextArea textArea;
+public class Controller implements Initializable, PropertyChangeListener {  // Implement Initializable
+    @FXML private TextArea contentArea;
+    @FXML private HBox groupBarContainer;
+    @FXML private VBox pageBarContainer;
+    @FXML private Button addGroupBtn;
+    @FXML private Button addPageBtn;
 
-    @FXML
-    private HBox groupBar;
-    @FXML
-    private VBox pageBar;
+    private GroupBar groupBar;
+    private PageBar pageBar;
 
-    private final PauseTransition debouncer = new PauseTransition(Duration.seconds(0.5));
-    private String content = "";
-
-    @FXML
-    private ToggleButton defaultGroup;
-    @FXML
-    private ToggleButton defaultPage;
-
-    @FXML
-    private Button addGroup;
-    @FXML
-    private Button addPage;
-
-    private ToggleGroup noteGroup = new ToggleGroup();
-    private ToggleGroup notePages = new ToggleGroup();
-
-    private int groupCount = 1;
-    private int pageCount = 1;
+    private final NoteFacade facade = new NoteFacade();
+    private NotePage currentPage;
 
     @Override  // Add initialize method
     public void initialize(URL location, ResourceBundle resources) {
-        setupTextHandling();
-        defaultGroup.setToggleGroup(noteGroup);
-        defaultPage.setToggleGroup(notePages);
-        defaultGroup.setSelected(true);
-        defaultPage.setSelected(true);
-        setUpNewPageGroup(defaultGroup, "Group");
-        setUpNewPageGroup(defaultPage, "Page");
+        // Initialize GUI components with facade
+        groupBar = new GroupBar(facade);
+        pageBar = new PageBar(facade);
+
+        groupBarContainer.getChildren().addFirst(groupBar);
+        pageBarContainer.getChildren().addFirst(pageBar);
+
+        // Register for content updates
+        facade.addPropertyChangeListener(this);
+        currentPage = facade.getCurrentPage();
+        loadPageContent();
+
+        setupButtons();
     }
 
-    private void setupTextHandling() {
-        System.out.println("Setting up text handling...");
-        textArea.richChanges().subscribe(change -> {
-            System.out.println("Change detected: " + change);
-            debouncer.setOnFinished(e -> saveContent());
-            debouncer.playFromStart();
-        });
+    private void setupButtons() {
+        addGroupBtn.setOnAction(e -> facade.createNewGroup());
+        addPageBtn.setOnAction(e -> facade.createNewPage(facade.getCurrentGroup()));
     }
 
-    @FXML
-    public void debugging() {
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        EventPropertyNameEnum event = EventPropertyNameEnum.fromPropertyName(evt.getPropertyName());
+        if (event == null) { throw new IllegalArgumentException("Unknown property: " + evt.getPropertyName()); }
 
-        System.out.println("Current content: " + content);
-//        System.out.println("TextArea content: " + textArea.getText());
-    }
+        switch (event) {
+            case SWITCH_TO_PAGE:
+                saveCurrentContent();
+                currentPage = (NotePage) evt.getNewValue();
+                loadPageContent();
+                break;
 
-    private void saveContent() {
-        content = textArea.getText();
-//        System.out.println("Auto-saved: " + content);
-    }
-
-    @FXML
-    private void addNewGroup() {
-        groupCount++;
-        ToggleButton newGroup = new ToggleButton("Group " + groupCount);
-
-        // Add context menu for deletion
-        setUpNewPageGroup(newGroup, "Group");
-
-        // Add before the "+" button
-        groupBar.getChildren().add(groupBar.getChildren().size() - 1, newGroup);
-    }
-
-    private void setUpNewPageGroup(ToggleButton newButton, String groupOrPage) {
-        ContextMenu contextMenu = new ContextMenu();
-        MenuItem deleteItem = new MenuItem("Delete " + groupOrPage);
-        if  (groupOrPage.equals("Group")) {
-            deleteItem.setOnAction(e -> deleteGroup(newButton));
-            newButton.setToggleGroup(noteGroup);
-        } else if (groupOrPage.equals("Page")) {
-            deleteItem.setOnAction(e -> deletePage(newButton));
-            newButton.setToggleGroup(notePages);
-        } else {
-            throw new IllegalArgumentException("Invalid group or page");
-        }
-        contextMenu.getItems().add(deleteItem);
-        newButton.setContextMenu(contextMenu);
-    }
-
-    private void deleteGroup(ToggleButton groupButton) {
-        groupBar.getChildren().remove(groupButton);
-        groupCount--;
-    }
-
-    @FXML
-    private void addNewPage() {
-        pageCount++;
-        ToggleButton newPage = new ToggleButton("Page " + pageCount);
-
-        // Add context menu for deletion
-        setUpNewPageGroup(newPage, "Page");
-
-        // Add before the "+" button
-        pageBar.getChildren().add(pageBar.getChildren().size() - 1, newPage);
-    }
-
-    private void deletePage(ToggleButton pageButton) {
-        pageBar.getChildren().remove(pageButton);
-        pageCount--;
-    }
-
-    // Helper method to apply a new style to selected text
-    @FXML
-    private void applyStyle() {
-        if (textArea.getSelection().getLength() > 0) {
-            String existingStyle = textArea.getStyleAtPosition(textArea.getSelection().getStart());
-            String combinedStyle = combineStyles(existingStyle, "-fx-fill: " + toHex(Color.RED) + ";");
-
-            textArea.setStyle(
-                    textArea.getSelection().getStart(),
-                    textArea.getSelection().getEnd(),
-                    combinedStyle
-            );
+            case SET_CONTENT:
+                // If current page content changed externally
+                if (evt.getSource() == currentPage) {
+                    loadPageContent();
+                }
+                break;
         }
     }
 
-    // Combine existing style with new style
-    private String combineStyles(String existing, String additional) {
-        if (existing == null || existing.isEmpty()) {
-            return additional;
+    private void saveCurrentContent() {
+        if (currentPage != null) {
+            currentPage.setPlainText(contentArea.getText());
         }
-
-        // Remove conflicting properties
-        String[] properties = additional.split(";");
-        for (String prop : properties) {
-            String key = prop.split(":")[0].trim();
-            existing = existing.replaceAll(key + "\\s*:[^;]*;?", "");
-        }
-
-        // Combine styles
-        return (existing.endsWith(";") ? existing : existing + ";") + additional;
     }
 
-    // Convert Color to hex format
-    private String toHex(Color color) {
-        return String.format("#%02X%02X%02X",
-                (int)(color.getRed() * 255),
-                (int)(color.getGreen() * 255),
-                (int)(color.getBlue() * 255));
+    private void loadPageContent() {
+        if (currentPage != null) {
+            contentArea.setText(currentPage.getPlainTextContent());
+        }
+    }
+
+    public void saveAllContent() {
+        saveCurrentContent();
+        try {
+            facade.saveNotebook("notebook.dat");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

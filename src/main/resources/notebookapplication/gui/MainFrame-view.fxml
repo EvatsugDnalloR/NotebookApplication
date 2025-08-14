@@ -3,7 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<?import org.fxmisc.richtext.InlineCssTextArea?>
+
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="667.0" prefWidth="802.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="notebookapplication.gui.Controller">
    <children>
       <MenuBar layoutX="-7.0" layoutY="-2.0" prefHeight="27.0" prefWidth="809.0">
@@ -27,29 +27,27 @@
       </MenuBar>
       <BorderPane layoutX="-1.0" layoutY="64.0" prefHeight="592.0" prefWidth="800.0">
          <top>
-            <HBox fx:id="groupBar" prefHeight="24.0" prefWidth="739.0" BorderPane.alignment="CENTER">
+            <HBox fx:id="groupBarContainer" prefHeight="24.0" prefWidth="739.0" BorderPane.alignment="CENTER">
                <children>
-                  <ToggleButton fx:id="defaultGroup" mnemonicParsing="false" prefHeight="27.0" prefWidth="70.0" text="Group 1" />
-                  <Button fx:id="addGroup" mnemonicParsing="false" onAction="#addNewGroup" prefHeight="23.0" prefWidth="37.0" text="+" />
+                  <Button fx:id="addGroupBtn" mnemonicParsing="false" prefHeight="23.0" prefWidth="37.0" text="+" />
                </children>
             </HBox>
          </top>
          <right>
-            <VBox fx:id="pageBar" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+            <VBox fx:id="pageBarContainer" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
                <children>
-                  <ToggleButton fx:id="defaultPage" mnemonicParsing="false" prefHeight="21.0" prefWidth="103.0" text="Page 1" />
-                  <Button fx:id="addPage" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#addNewPage" prefHeight="21.0" prefWidth="103.0" text="+" />
+                  <Button fx:id="addPageBtn" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" prefHeight="21.0" prefWidth="103.0" text="+" />
                </children>
             </VBox>
          </right>
          <center>
-<!--             <TextArea prefHeight="248.0" prefWidth="413.0" BorderPane.alignment="CENTER" />-->
-            <InlineCssTextArea fx:id="textArea" prefHeight="248.0" prefWidth="413.0" BorderPane.alignment="CENTER" />
+             <TextArea fx:id="contentArea" prefHeight="248.0" prefWidth="413.0" BorderPane.alignment="CENTER" />
+<!--            <InlineCssTextArea fx:id="textArea" prefHeight="248.0" prefWidth="413.0" BorderPane.alignment="CENTER" />-->
          </center>
       </BorderPane>
       <ToolBar layoutY="25.0" prefHeight="40.0" prefWidth="802.0">
         <items>
-          <Button fx:id="testering" mnemonicParsing="false" onAction="#applyStyle" text="Button" />
+          <Button mnemonicParsing="false" text="Red" />
         </items>
       </ToolBar>
    </children>

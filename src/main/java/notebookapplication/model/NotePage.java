@@ -1,238 +1,164 @@
 package notebookapplication.model;
 
 import java.beans.PropertyChangeSupport;
+import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 
 /**
- * Represents a note page in a note group in the notebook application.
- * This class extends {@link ModelSubject} and handles all the text operations
- *   such as inserting characters or pasting strings into the note page, deleting
- *   one character or strings selected, and also the string replacement.
- * Calls {@code support.firePropertyChange} to notify observers about the changes.
+ * Represents a note page in a note group.
+ * Stores rich text content with styling information.
  */
-public class NotePage extends ModelSubject {
-    /** The id of this note page to be recognised by its belonging NoteGroup. */
-    private int pageID;
+public class NotePage extends NoteSubject implements Serializable {
+    private final UUID id;
+    private String title;
+    private final List<TextSegment> contentSegments;
 
-    /** The name of this note page to be shown in the gui. */
-    private String pageName;
-
-    /** The text content of the whole note page. */
-    private StringBuilder content;
-
-    /**
-     * Constructs a NotePage with the specified name and content.
-     *
-     * @param pageName  the name of the page
-     * @param content   the initial content of the page
-     */
-    NotePage(String pageName, String content) {
-        this.pageName = pageName;
-        this.content = new StringBuilder(content);
-        support = new PropertyChangeSupport(this);  // initialise the observer
+    /** Creates a new note page with default title and empty content. */
+    public NotePage() {
+        this.id = UUID.randomUUID();
+        this.title = "Untitled Page";
+        this.contentSegments = new ArrayList<>();
+        support = new PropertyChangeSupport(this);
     }
 
     /**
-     * Inserts content at the specified caret position.
-     * Handles both character typing inserting operation and string pasting
-     *   operation.
+     * Creates a new note page with specified title.
      *
-     * @param caretPosition the position where user chose to insert the content
-     * @param content   the content to be inserted
-     * @pre {@code caretPosition \in {0, ..., content.length()}}
-     * @throws IllegalArgumentException if caretPosition is not inside the {@code content}
-     *      string bounds
+     * @param title The title of the note page
      */
-    public void insertContent(int caretPosition, String content) {
-        if (caretPosition < 0 || caretPosition > this.content.length()) {
-            throw new IllegalArgumentException(
-                MessageFormat.format("Caret position {0} is out of bounds", caretPosition)
-            );
+    public NotePage(String title) {
+        this.id = UUID.randomUUID();
+        this.title = title;
+        this.contentSegments = new ArrayList<>();
+        support = new PropertyChangeSupport(this);
+    }
+
+    /**
+     * Creates a note page with all properties (for loading from storage).
+     *
+     * @param id Unique identifier
+     * @param title Page title
+     * @param segments Text segments with styling
+     */
+    public NotePage(UUID id, String title, List<TextSegment> segments) {
+        this.id = id;
+        this.title = title;
+        this.contentSegments = new ArrayList<>(segments);
+        support = new PropertyChangeSupport(this);
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        String oldTitle = this.title;
+        this.title = title;
+        support.firePropertyChange(EventPropertyNameEnum.PAGE_RENAME.getPropertyName(),  oldTitle, this.title);
+    }
+
+    /**
+     * @return All text segments with their styling
+     */
+    public List<TextSegment> getContentSegments() {
+        return new ArrayList<>(contentSegments);
+    }
+
+    /**
+     * Replaces all content segments with new content.
+     * @param segments New text segments
+     */
+    public void setContent(List<TextSegment> segments) {
+        List<TextSegment> oldContentSegments = getContentSegments();
+        contentSegments.clear();
+        contentSegments.addAll(segments);
+        support.firePropertyChange(
+                EventPropertyNameEnum.SET_CONTENT.getPropertyName(), oldContentSegments, this.contentSegments
+        );
+    }
+
+    public void setPlainText(String text) {
+
+        contentSegments.clear();
+        contentSegments.add(new TextSegment(text, ""));
+        support.firePropertyChange(
+                EventPropertyNameEnum.SET_CONTENT.getPropertyName(), null, this.contentSegments
+        );
+    }
+
+    /**
+     * @return Plain text representation (without styling)
+     */
+    public String getPlainTextContent() {
+        StringBuilder sb = new StringBuilder();
+        for (TextSegment segment : contentSegments) {
+            sb.append(segment.text());
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Converts the content to HTML for storage and rendering.
+     * @return HTML representation with styling
+     */
+    public String toHtml() {
+        StringBuilder html = new StringBuilder();
+        html.append("<div class='note-content'>");
+
+        for (TextSegment segment : contentSegments) {
+            html.append("<span style='")
+                    .append(segment.cssStyle())
+                    .append("'>")
+                    .append(escapeHtml(segment.text()))
+                    .append("</span>");
         }
 
-        String oldContent = getContent();
-        this.content.insert(caretPosition, content);
-
-        // notify the observer with Property Name "insert"
-        support.firePropertyChange("insert", oldContent, getContent());
+        html.append("</div>");
+        return html.toString();
     }
 
     /**
-     * Deletes content between the specified start and end positions.
-     * Handles both deletion of character due to BACK_SPACE or DEL key, and also
-     *   the deletion of a selected string.
-     *
-     * @param startPosition the start position of the content to be deleted
-     * @param endPosition   the end position of the content to be deleted
-     * @pre {@code startPosition, endPosition \in {0, ..., this.content.length()}} &&
-     *      {@code startPosition < endPosition}
-     * @throws IllegalArgumentException if precondition is violated
+     * Loads content from HTML representation.
+     * @param html HTML string with styling
      */
-    public void deleteContent(int startPosition, int endPosition) {
-        if (startPosition < 0
-                || startPosition >= endPosition
-                || endPosition > this.content.length()) {
-            throw new IllegalArgumentException(
-                    "Position indexes for deletion is out of bounds");
+    public void fromHtml(String html) {
+        contentSegments.clear();
+        // Simplified parser - in practice use a proper HTML parser
+        String[] parts = html.split("<span style='|</span>");
+
+        for (int i = 1; i < parts.length; i += 2) {
+            String styleAndText = parts[i];
+            int endStyle = styleAndText.indexOf("'>");
+            if (endStyle != -1) {
+                String style = styleAndText.substring(0, endStyle);
+                String text = unescapeHtml(styleAndText.substring(endStyle + 2));
+                contentSegments.add(new TextSegment(text, style));
+            }
         }
-
-        String oldContent = getContent();
-        this.content.delete(startPosition, endPosition);
-
-        // notify the observer with Property Name "delete"
-        support.firePropertyChange("delete", oldContent, this.content.toString());
     }
 
-    /**
-     * Replaces content between the specified positions with new content.
-     * Handles the case where user selects a string and then replaces it by typing
-     *   a character or pasting another string.
-     *
-     * @param startPosition the start position of the content to be replaced
-     * @param endPosition   the end position of the content to be replaced
-     * @param newContent    the new content to be inserted
-     * @pre {@code startPosition, endPosition \in {0, this.content.length()}} &&
-     *      {@code startPosition < endPosition}
-     * @throws IllegalArgumentException if precondition is violated
-     */
-    public void replaceContent(int startPosition, int endPosition, String newContent) {
-        if (startPosition < 0
-                || startPosition >= endPosition
-                || endPosition > this.content.length()) {
-            throw new IllegalArgumentException(
-                    "Position indexes for deletion is out of bounds");
-        }
-
-        String oldContent = getContent();
-        content.replace(startPosition, endPosition, newContent);
-        support.firePropertyChange("replace", oldContent, getContent());
+    // Helper methods for HTML escaping
+    private String escapeHtml(String text) {
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
-//    /**
-//     * Inserts a symbol to the front of a chosen line of string.
-//     * Handles the case where user presses the button to insert some special symbols
-//     *   such as bullet points or checkboxes, etc.
-//     *
-//     * @param lineNum   the line number where the symbol will be inserted
-//     * @param symbolEnum    the enum containing the symbol to be inserted
-//     * @pre {@code lineNum \in {0, ..., lines.length - 1}}
-//     * @throws IllegalArgumentException if {@code lineNum} is out of bounds of {@code lines}
-//     * @post    {@code symbolEnum.symbol} is inserted to the front of the chosen line
-//     *      with two spaces between the symbol and the start of the text,
-//     *      while the other lines are not modified
-//     */
-//    public void insertSymbol(int lineNum, Symbols symbolEnum) {
-//        String oldContent = getContent();
-//        String[] lines = content.toString().split("\n");
-//
-//        if (lineNum < 0 || lineNum >= lines.length) {
-//            throw new IllegalArgumentException(
-//                    MessageFormat.format("Line number {0} is out of bounds", lineNum));
-//        }
-//
-//        lines[lineNum] = MessageFormat.format("{0}  {1}", symbolEnum.symbol, lines[lineNum]);
-//        content = new StringBuilder(String.join("\n", lines));
-//
-//        // notify the observer with Property Name "symbol"
-//        support.firePropertyChange("symbol", oldContent, getContent());
-//    }
-
-    /**
-     * Replace the selected string with the same string but formatted with the
-     *      custom style tag specified in {@link TextEditing} class.
-     * Only accepting a lambda expression that takes the original content as input
-     *      and returns a formatted string for the parameter {@code stringSupplier}.
-     *
-     * <p>Example usage:</p>
-     * <pre>{@code
-     * NotePage notePage = new NotePage("pageName", "Some default content");
-     * // the indexes parsed to the substring inside the lambda function should
-     * // match the indexes parsed to the formatting function
-     * notePage.formatting(5, 12,
-     *      () -> TextEdit.setBold(notePage.getContent().substring(5, 12)));
-     * System.out.println(notePage.getContent());
-     * // should prints "Some [style="-fx-font-weight: bold;"]default[/style] content"
-     * }</pre>
-     *
-     * @param startPosition the start position of the content to be formatted
-     * @param endPosition   the end position of the content to be formatted
-     * @param stringSupplier   the lambda function that returns the string
-     *                         processed by one of the functions in {@link TextEditing}
-     * @pre {@code startPosition, endPosition \in {0, ..., this.content.length()}} &&
-     *      {@code startPosition < endPosition} && {@code stringSupplier.get()} contains the
-     *      correct custom style tag
-     * @throws IllegalArgumentException if any precondition is violated
-     * @post the selected content is surrounded with the custom style tag,
-     *      but the content itself is not modified
-     */
-    public void formatting(int startPosition,
-                           int endPosition,
-                           StringSupplier stringSupplier) {
-        if (startPosition < 0
-                || startPosition >= endPosition
-                || endPosition > this.content.length()) {
-            throw new IllegalArgumentException(
-                    "Position indexes for deletion is out of bounds");
-        }
-
-        String formattedString = stringSupplier.get();
-        // check if formattedString contains the correct custom style tag
-        if (!matchTag(formattedString)) {
-            throw new IllegalArgumentException("Unsupported formatting String");
-        }
-
-        String oldContent = getContent();
-        content.replace(startPosition, endPosition, formattedString);
-
-        // notify the observer with Property Name "format"
-        support.firePropertyChange("format", oldContent, getContent());
-    }
-
-    /**
-     * Private auxiliary method to help {@code formatting} function to check
-     *      if the formatted string parsed in contains the correct
-     *      custom style tag specified in {@link TextEditing} class.
-     *
-     * @param formattedString   the string that should contain the custom style tag
-     * @return  true if {@code formattedString} matches the pattern, false otherwise
-     */
-    private boolean matchTag(String formattedString) {
-        /*
-        Create the pattern of [style="..."]...[/style], where no other quotation mark
-            is allowed inside the first ellipsis.
-        The (?s) flag ensures the ".*?" matches the possible new lines
-            inside the second ellipsis.
-         */
-        Pattern pattern = Pattern.compile("(?s)\\[style=\"[^\"]*\"].*?\\[/style]");
-        return pattern.matcher(formattedString).matches();
-    }
-
-    // getter for string content of this.content
-    public String getContent() {
-        return this.content.toString();
-    }
-
-    // setter for this.content
-    public void setContent(String content) {
-        this.content = new StringBuilder(content);
-    }
-
-    // getter for the page name
-    public String getPageName() {
-        return this.pageName;
-    }
-
-    /**
-     * Setter for the page name.
-     * Replace the page name with the new one, and also need to notify the observer.
-     *
-     * @param pageName  the page name to replace {@code this.pageName}
-     */
-    public void setPageName(String pageName) {
-        // notify the observer with Property Name "pageName"
-        support.firePropertyChange("pageName", this.pageName, pageName);
-
-        this.pageName = pageName;
+    private String unescapeHtml(String text) {
+        return text.replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'");
     }
 }
