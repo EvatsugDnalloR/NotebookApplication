@@ -5,7 +5,7 @@
 - [Basic Interactions](#basic-interactions)
 - [Text Editing Features](#text-editing-features)
 - [UndoRedo](#undoredo)
-- [Save to File](#save-to-file)
+- [Save to File](#save-to-file-with-encryption)
 - [Export File](#export-file)
 - [Import File](#import-file)
 
