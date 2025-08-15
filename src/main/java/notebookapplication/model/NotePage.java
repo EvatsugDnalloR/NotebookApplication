@@ -2,7 +2,6 @@ package notebookapplication.model;
 
 import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -14,13 +13,13 @@ import java.util.UUID;
  */
 public class NotePage extends NoteSubject implements Serializable {
     private final UUID id;
-    private String title;
+    private String pageName;
     private final List<TextSegment> contentSegments;
 
     /** Creates a new note page with default title and empty content. */
     public NotePage() {
         this.id = UUID.randomUUID();
-        this.title = "Untitled Page";
+        this.pageName = "Untitled Page";
         this.contentSegments = new ArrayList<>();
         support = new PropertyChangeSupport(this);
     }
@@ -28,11 +27,11 @@ public class NotePage extends NoteSubject implements Serializable {
     /**
      * Creates a new note page with specified title.
      *
-     * @param title The title of the note page
+     * @param pageName The title of the note page
      */
-    public NotePage(String title) {
+    public NotePage(String pageName) {
         this.id = UUID.randomUUID();
-        this.title = title;
+        this.pageName = pageName;
         this.contentSegments = new ArrayList<>();
         support = new PropertyChangeSupport(this);
     }
@@ -41,12 +40,12 @@ public class NotePage extends NoteSubject implements Serializable {
      * Creates a note page with all properties (for loading from storage).
      *
      * @param id Unique identifier
-     * @param title Page title
+     * @param pageName Page title
      * @param segments Text segments with styling
      */
-    public NotePage(UUID id, String title, List<TextSegment> segments) {
+    public NotePage(UUID id, String pageName, List<TextSegment> segments) {
         this.id = id;
-        this.title = title;
+        this.pageName = pageName;
         this.contentSegments = new ArrayList<>(segments);
         support = new PropertyChangeSupport(this);
     }
@@ -55,14 +54,14 @@ public class NotePage extends NoteSubject implements Serializable {
         return id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getPageName() {
+        return pageName;
     }
 
-    public void setTitle(String title) {
-        String oldTitle = this.title;
-        this.title = title;
-        support.firePropertyChange(EventPropertyNameEnum.PAGE_RENAME.getPropertyName(),  oldTitle, this.title);
+    public void setPageName(String pageName) {
+        String oldTitle = this.pageName;
+        this.pageName = pageName;
+        support.firePropertyChange(EventPropertyNameEnum.PAGE_RENAME.getPropertyName(),  oldTitle, this.pageName);
     }
 
     /**

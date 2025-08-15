@@ -11,7 +11,7 @@ import java.util.UUID;
  */
 public class NoteGroup extends NoteSubject implements Serializable {
     private final UUID id;
-    private String name;
+    private String groupName;
     private final List<NotePage> pages;
 
     /**
@@ -19,7 +19,7 @@ public class NoteGroup extends NoteSubject implements Serializable {
      */
     public NoteGroup() {
         this.id = UUID.randomUUID();
-        this.name = "Untitled Group";
+        this.groupName = "Untitled Group";
         this.pages = new ArrayList<>();
         this.pages.add(new NotePage()); // default first page
         support = new PropertyChangeSupport(this);
@@ -28,12 +28,12 @@ public class NoteGroup extends NoteSubject implements Serializable {
     /**
      *
      * @param id
-     * @param name
+     * @param groupName
      * @param pages
      */
-    public NoteGroup(UUID id, String name, ArrayList<NotePage> pages) {
+    public NoteGroup(UUID id, String groupName, ArrayList<NotePage> pages) {
         this.id = UUID.randomUUID();
-        this.name = name;
+        this.groupName = groupName;
         this.pages = pages;
         support = new PropertyChangeSupport(this);
     }
@@ -43,14 +43,14 @@ public class NoteGroup extends NoteSubject implements Serializable {
         return id;
     }
 
-    public String getName() {
-        return name;
+    public String getGroupName() {
+        return groupName;
     }
 
-    public void setName(String name) {
-        String oldName = this.name;
-        this.name = name;
-        support.firePropertyChange(EventPropertyNameEnum.GROUP_RENAME.getPropertyName(), oldName, this.name);
+    public void setGroupName(String groupName) {
+        String oldName = this.groupName;
+        this.groupName = groupName;
+        support.firePropertyChange(EventPropertyNameEnum.GROUP_RENAME.getPropertyName(), oldName, this.groupName);
     }
 
     public List<NotePage> getPages() {

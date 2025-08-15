@@ -29,7 +29,7 @@ public class GroupBar extends HBox implements PropertyChangeListener {
     }
 
     private void addGroupButton(NoteGroup group) {
-        ToggleButton button = new ToggleButton(group.getName());
+        ToggleButton button = new ToggleButton(group.getGroupName());
         button.setUserData(group);
         button.setToggleGroup(toggleGroup);
 
@@ -110,7 +110,7 @@ public class GroupBar extends HBox implements PropertyChangeListener {
     private void updateGroupName(NoteGroup group) {
         for (var node : getChildren()) {
             if (node instanceof ToggleButton button && button.getUserData() == group) {
-                button.setText(group.getName());
+                button.setText(group.getGroupName());
                 break;
             }
         }
@@ -134,12 +134,12 @@ public class GroupBar extends HBox implements PropertyChangeListener {
     }
 
     private void renameGroup(NoteGroup group) {
-        TextInputDialog dialog = new TextInputDialog(group.getName());
+        TextInputDialog dialog = new TextInputDialog(group.getGroupName());
         dialog.setTitle("Rename Group");
         dialog.setHeaderText("Enter new group name:");
         dialog.setContentText("Name:");
 
         Optional<String> result = dialog.showAndWait();
-        result.ifPresent(group::setName);
+        result.ifPresent(group::setGroupName);
     }
 }

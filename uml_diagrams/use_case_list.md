@@ -93,12 +93,12 @@ a3. The most recent undone operation has been redone
 ### Requirements:
 `Basic Interactions`, `Text Editing Features`
 
-## Real-time Saving
+## Save to File (with encryption)
 ### Priority: `Should`
 ### Summary
-After the application launched, it detects changes every 5 seconds, 
-and updates the notebook saving file if there is a change. Furthermore, when user quits the app,
-the app should perform another check and saving.
+When users quit the app or click save to file option,
+the app saves all the contents including note groups, pages, and their corresponding contents,
+and finally saves the encrypted content to local file.
 ### Actors
 `User`, `File`
 ### Pre-conditions
@@ -107,9 +107,9 @@ the app should perform another check and saving.
 ### Post-condition
 All the content of the notebook has been stored to the file.
 ### Main Scenario
-1. The application is launched and the 5-second counter is started
-2. The 5-second interval is reached, the app performs a saving automatically
-3. User quits the app, and the app saves all the current contents to the file before closing
+1. User manually saved the file or quits the app
+2. The app gets all the contents and encrypts them with symmetric encryption, and symmetric key appended to the encrypted file
+3. Write the encrypted content into the local file
 ### Exception Scenario
 - Trigger: The file for storing the content of the notebook doesn't exist or corrupted when trying to save the changes
 

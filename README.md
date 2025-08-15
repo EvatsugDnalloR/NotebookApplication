@@ -1,8 +1,8 @@
 # NotebookApplication
-A java notebook application using javafx as gui framework
+A OneNote-like notebook application using javafx as GUI framework.
 
-## UML Diagrams
-### Use Case Diagram (Early design)
+## Design
+### Use Case Diagram
 ![use_case_diagram](uml_diagrams/images/use_case_diagram.svg)
 
 ### Use Case Lists

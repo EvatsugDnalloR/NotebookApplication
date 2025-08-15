@@ -36,7 +36,7 @@ public class PageBar extends VBox implements PropertyChangeListener {
     }
 
     private void addPageButton(NotePage page) {
-        ToggleButton button = new ToggleButton(page.getTitle());
+        ToggleButton button = new ToggleButton(page.getPageName());
         button.setUserData(page);
         button.setToggleGroup(toggleGroup);
 
@@ -148,7 +148,7 @@ public class PageBar extends VBox implements PropertyChangeListener {
         for (var node : getChildren()) {
             if (node instanceof ToggleButton button) {
                 if (button.getUserData() == page) {
-                    button.setText(page.getTitle());
+                    button.setText(page.getPageName());
                     break;
                 }
             }
@@ -174,12 +174,12 @@ public class PageBar extends VBox implements PropertyChangeListener {
     }
 
     private void renamePage(NotePage page) {
-        TextInputDialog dialog = new TextInputDialog(page.getTitle());
+        TextInputDialog dialog = new TextInputDialog(page.getPageName());
         dialog.setTitle("Rename Page");
         dialog.setHeaderText("Enter new page title:");
         dialog.setContentText("Title:");
 
         Optional<String> result = dialog.showAndWait();
-        result.ifPresent(page::setTitle);
+        result.ifPresent(page::setPageName);
     }
 }
