@@ -3,20 +3,21 @@ package notebookapplication.model;
 import java.io.Serializable;
 
 /**
- * Represents a segment of text with consistent styling.
+ * Immutable record representing a segment of text with consistent styling.
+ * Supports serialization for saving and loading notebook content.
  */
 public record TextSegment(String text, String cssStyle) implements Serializable {
     /**
-     * Creates a segment with specified styling properties.
+     * Factory method for creating a styled text segment with specified formatting.
      *
-     * @param text
-     * @param fontFamily
-     * @param fontSize
-     * @param color
-     * @param bold
-     * @param italic
-     * @param underline
-     * @return
+     * @param text the text content
+     * @param fontFamily the font family for styling
+     * @param fontSize the font size in pixels
+     * @param color the text colour
+     * @param bold whether the text should be bold
+     * @param italic whether the text should be italic
+     * @param underline whether the text should be underlined
+     * @return a new TextSegment with the specified text and CSS styling
      */
     public static TextSegment createStyledSegment(
             String text, String fontFamily,

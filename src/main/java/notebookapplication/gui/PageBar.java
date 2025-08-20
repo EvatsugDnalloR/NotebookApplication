@@ -11,11 +11,47 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Optional;
 
+
+/**
+ * A vertical bar (VBox) component that displays and manages note pages as toggle buttons.
+ *
+ * <p>Provides functionality for adding, removing, renaming pages, and switching between them.
+ *
+ * <p>Implements PropertyChangeListener to respond to model changes.
+ */
 public class PageBar extends VBox implements PropertyChangeListener {
+    /** ToggleGroup that manages switching between NotePages (toggle buttons). */
     private final ToggleGroup toggleGroup = new ToggleGroup();
+
+    /** The access point to the backend model of the notebook application.  */
     private final NoteFacade facade;
+
+    /**
+     * The current group being displayed by this PageBar.
+     * This local reference is maintained for several reasons:
+     *
+     * <p>- Listener Management: Tracks which group's pages need event listeners
+     *
+     * <p>- Performance: Avoids repeated calls to facade.getCurrentGroup()
+     *
+     * <p>- State Consistency: Provides a stable reference during event processing
+     *
+     * <p>- Context Operations: Enables group-specific UI operations (context menus)
+     *
+     * <p>- Cleanup: Knows which group to remove listeners from during group switches
+     *
+     * <p>It serves specific UI management purposes that require a stable reference throughout
+     * event handling operations.
+     */
     private NoteGroup currentGroup;
 
+    /**
+     * Constructs a PageBar with a reference to the application facade.
+     *
+     * <p>Initialises the page buttons and sets up the toggle group behaviour.
+     *
+     * @param facade the main application facade for accessing model functionality
+     */
     public PageBar(NoteFacade facade) {
         this.facade = facade;
         this.currentGroup = facade.getCurrentGroup();
@@ -27,14 +63,26 @@ public class PageBar extends VBox implements PropertyChangeListener {
         setupToggleGroup();
     }
 
+    /**
+     * Initialises the page buttons by creating a toggle button for each page in the current group.
+     *
+     * <p>Called during construction and when switching groups.
+     */
     private void initializePages() {
         for (NotePage page : currentGroup.getPages()) {
             addPageButton(page);
         }
         selectCurrentPage();
-//        currentGroup.addPropertyChangeListener(this);
+//        currentGroup.addPropertyChangeListener(this);   // the line that causes a major UI bug :)
     }
 
+    /**
+     * Creates and adds a toggle button for a specific page to the UI.
+     *
+     * <p>Sets up the button's properties, context menu, and click behaviour.
+     *
+     * @param page the NotePage to create a button for
+     */
     private void addPageButton(NotePage page) {
         ToggleButton button = new ToggleButton(page.getPageName());
         button.setUserData(page);
@@ -43,7 +91,7 @@ public class PageBar extends VBox implements PropertyChangeListener {
         // Add context menu
         button.setContextMenu(createPageContextMenu(page));
 
-        button.setOnAction(e -> {
+        button.setOnAction(_ -> {
             if (button.isSelected()) {
                 facade.switchToPage(page);
             }
@@ -53,6 +101,11 @@ public class PageBar extends VBox implements PropertyChangeListener {
         page.addPropertyChangeListener(this);
     }
 
+    /**
+     * Selects the toggle button corresponding to the currently active page.
+     *
+     * <p>Ensures the UI reflects the current model state.
+     */
     private void selectCurrentPage() {
         for (var node : getChildren()) {
             if (node instanceof ToggleButton button) {
@@ -64,6 +117,11 @@ public class PageBar extends VBox implements PropertyChangeListener {
         }
     }
 
+    /**
+     * Configures the toggle group to prevent deselection of all buttons.
+     *
+     * <p>Ensures at least one page is always selected.
+     */
     private void setupToggleGroup() {
         toggleGroup.selectedToggleProperty().addListener(
                 (obs, oldToggle, newToggle) -> {
@@ -73,18 +131,29 @@ public class PageBar extends VBox implements PropertyChangeListener {
         });
     }
 
+    /**
+     * Cleans up event listeners and UI elements for the current group before switching.
+     *
+     * <p>Prevents memory leaks and ensures a clean state for the new group.
+     */
     private void cleanupCurrentGroup() {
-        // Remove listener from current group
         if (currentGroup != null) {
             currentGroup.removePropertyChangeListener(this);
             for (NotePage page : currentGroup.getPages()) {
-                page.removePropertyChangeListener(this);    // remove listeners from all pages in current group
+                page.removePropertyChangeListener(this);    // remove listeners from all pages in the current group
             }
         }
 
         getChildren().clear();  // clear all page buttons
     }
 
+    /**
+     * Handles property change events from the model.
+     *
+     * <p>Responds to group switching, page addition, removal, renaming, and selection changes.
+     *
+     * @param evt the property change event containing information about the change
+     */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         EventPropertyNameEnum event = EventPropertyNameEnum.fromPropertyName(evt.getPropertyName());
@@ -92,7 +161,7 @@ public class PageBar extends VBox implements PropertyChangeListener {
 
         switch (event) {
             case SWITCH_TO_GROUP:
-                // Clean up previous group before switching
+                // Clean up the previous group before switching
                 cleanupCurrentGroup();
 
                 currentGroup = (NoteGroup) evt.getNewValue();
@@ -128,6 +197,14 @@ public class PageBar extends VBox implements PropertyChangeListener {
         }
     }
 
+    /**
+     * Removes the button for a specific page and cleans up its event listener.
+     *
+     * <p>Ensures at least one page remains by creating a new one if needed.
+     *
+     * @param page the page to remove from the UI
+     * @post {@code getChildren().isEmpty() == False}
+     */
     private void removePageButton(NotePage page) {
         page.removePropertyChangeListener(this);
 
@@ -144,6 +221,11 @@ public class PageBar extends VBox implements PropertyChangeListener {
         }
     }
 
+    /**
+     * Updates the button text when a page is renamed.
+     *
+     * @param page the page that was renamed
+     */
     private void updatePageName(NotePage page) {
         for (var node : getChildren()) {
             if (node instanceof ToggleButton button) {
@@ -155,6 +237,14 @@ public class PageBar extends VBox implements PropertyChangeListener {
         }
     }
 
+    /**
+     * Creates a context menu with options to rename or delete a page.
+     *
+     * <p>The delete option is dynamically disabled for the last remaining page.
+     *
+     * @param page the page this context menu applies to
+     * @return a configured ContextMenu instance
+     */
     private ContextMenu createPageContextMenu(NotePage page) {
         ContextMenu menu = new ContextMenu();
 
@@ -173,6 +263,11 @@ public class PageBar extends VBox implements PropertyChangeListener {
         return menu;
     }
 
+    /**
+     * Shows a dialog to rename a page and updates the model with the new name.
+     *
+     * @param page the page to rename
+     */
     private void renamePage(NotePage page) {
         TextInputDialog dialog = new TextInputDialog(page.getPageName());
         dialog.setTitle("Rename Page");

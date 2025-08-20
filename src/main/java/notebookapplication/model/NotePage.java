@@ -8,13 +8,15 @@ import java.util.UUID;
 
 
 /**
- * Represents a note page in a note group.
- * Stores rich text content with styling information.
+ * Represents a single page of content in a notebook with rich text formatting capabilities.
+ *
+ * <p>Each page maintains a collection of text segments with individual styling and implemented
+ * model-observer pattern by property change notifications, for UI synchronisation.
  */
 public class NotePage extends NoteSubject implements Serializable {
     private final UUID id;
     private String pageName;
-    private final List<TextSegment> contentSegments;
+    private final List<TextSegment> contentSegments;    // contents of the page stored
 
     /** Creates a new note page with default title and empty content. */
     public NotePage() {
@@ -37,11 +39,11 @@ public class NotePage extends NoteSubject implements Serializable {
     }
 
     /**
-     * Creates a note page with all properties (for loading from storage).
+     * Creates a note page with all properties (primarily for loading from storage).
      *
-     * @param id Unique identifier
-     * @param pageName Page title
-     * @param segments Text segments with styling
+     * @param id the unique identifier for the page
+     * @param pageName the title of the page
+     * @param segments the text segments with styling information
      */
     public NotePage(UUID id, String pageName, List<TextSegment> segments) {
         this.id = id;
@@ -58,10 +60,15 @@ public class NotePage extends NoteSubject implements Serializable {
         return pageName;
     }
 
+    /**
+     * Updates the page title and notifies registered listeners of the change.
+     *
+     * @param pageName the new title for the page
+     */
     public void setPageName(String pageName) {
         String oldTitle = this.pageName;
         this.pageName = pageName;
-        support.firePropertyChange(EventPropertyNameEnum.PAGE_RENAME.getPropertyName(),  oldTitle, this.pageName);
+        support.firePropertyChange(EventPropertyNameEnum.PAGE_RENAME.getPropertyName(), oldTitle, this.pageName);
     }
 
     /**
@@ -72,8 +79,9 @@ public class NotePage extends NoteSubject implements Serializable {
     }
 
     /**
-     * Replaces all content segments with new content.
-     * @param segments New text segments
+     * Replaces all content segments with new content and notifies listeners.
+     *
+     * @param segments the new text segments to replace current content
      */
     public void setContent(List<TextSegment> segments) {
         List<TextSegment> oldContentSegments = getContentSegments();
@@ -84,6 +92,11 @@ public class NotePage extends NoteSubject implements Serializable {
         );
     }
 
+    /**
+     * Replaces all content with plain text (no styling) and notifies listeners.
+     *
+     * @param text the plain text content to set
+     */
     public void setPlainText(String text) {
 
         contentSegments.clear();
@@ -94,7 +107,9 @@ public class NotePage extends NoteSubject implements Serializable {
     }
 
     /**
-     * @return Plain text representation (without styling)
+     * Returns a plain text representation of all content segments.
+     *
+     * @return concatenated text from all segments without styling information
      */
     public String getPlainTextContent() {
         StringBuilder sb = new StringBuilder();
@@ -106,6 +121,7 @@ public class NotePage extends NoteSubject implements Serializable {
 
     /**
      * Converts the content to HTML for storage and rendering.
+     *
      * @return HTML representation with styling
      */
     public String toHtml() {
@@ -126,6 +142,7 @@ public class NotePage extends NoteSubject implements Serializable {
 
     /**
      * Loads content from HTML representation.
+     *
      * @param html HTML string with styling
      */
     public void fromHtml(String html) {
