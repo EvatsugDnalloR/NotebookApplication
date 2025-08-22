@@ -42,7 +42,7 @@ public class PageBar extends VBox implements PropertyChangeListener {
      *
      * <p>- Context Operations: Enables group-specific UI operations (context menus)
      *
-     * <p>- Cleanup: Knows which group to remove listeners from during group switches
+     * <p>- Clean-up: Knows which group to remove listeners from during group switches
      *
      * <p>It serves specific UI management purposes that require a stable reference throughout
      * event handling operations.
@@ -128,7 +128,7 @@ public class PageBar extends VBox implements PropertyChangeListener {
      */
     private void setupToggleGroup() {
         toggleGroup.selectedToggleProperty().addListener(
-                (obs, oldToggle, newToggle) -> {
+                (_, oldToggle, newToggle) -> {
                 if (newToggle == null && oldToggle != null) {
                     toggleGroup.selectToggle(oldToggle);
                 }

@@ -16,6 +16,6 @@ A OneNote-like notebook application using JavaFX as GUI framework.
 - [ ] Basic text editing features (color, fonts, size etc.)
 - [ ] Completed basic UI, including toolbar, menubar etc.
 - [ ] Advanced text grouping features (e.g. adding a checkbox in front of a paragraph, 
-and this paragrah should now be grouped by this checkbox, just as in OneNote)
+and this paragraph should now be grouped by this checkbox, just as in OneNote)
 - [ ] UndoRedo feature for NoteGroup-NotePage management and text grouping features
 - [ ] Better UI design (e.g. applying Material UI in JavaFX)
