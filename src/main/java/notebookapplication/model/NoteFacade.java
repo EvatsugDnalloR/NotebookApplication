@@ -19,6 +19,11 @@ import java.util.UUID;
  * including model-observer pattern by property change notification support, for UI synchronisation.
  */
 public class NoteFacade extends NoteSubject {
+    /*
+    TODO: Make NoteFacade the only class to fire property change, to simplify the gui update logic.
+    TODO: Complete the save-and-load function of the notebook data.
+     */
+
     private final List<NoteGroup> groups;
     private NoteGroup currentGroup;
     private NotePage currentPage;

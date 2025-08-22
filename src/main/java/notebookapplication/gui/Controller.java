@@ -25,6 +25,11 @@ import notebookapplication.model.NotePage;
  * <p>Implements both Initializable and PropertyChangeListener interfaces.
  */
 public class Controller implements Initializable, PropertyChangeListener {
+    /*
+    TODO: Replace TextArea by InlineCssTextArea and apply the text editing features.
+    TODO: Complete basic UI of the NotebookApplication.
+     */
+
     /**
      * The main content area where users can view and edit the text of the current note page.
      *
