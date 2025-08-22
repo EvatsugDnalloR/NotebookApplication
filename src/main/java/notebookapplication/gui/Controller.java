@@ -115,7 +115,6 @@ public class Controller implements Initializable, PropertyChangeListener {
      * Responds to page switching and content changes to keep the UI synchronised.
      *
      * @param evt the property change event containing information about the change
-     * @throws IllegalArgumentException if didn't match the specified event type
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -139,7 +138,8 @@ public class Controller implements Initializable, PropertyChangeListener {
                 break;
 
             default:
-                throw new IllegalArgumentException("Unknown property: " + event);
+                //throw new IllegalArgumentException("Unknown property: " + event);
+                break;
         }
     }
 

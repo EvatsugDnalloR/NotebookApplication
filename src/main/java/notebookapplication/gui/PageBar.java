@@ -159,7 +159,6 @@ public class PageBar extends VBox implements PropertyChangeListener {
      * <p>Responds to group switching, page addition, removal, renaming, and selection changes.
      *
      * @param evt the property change event containing information about the change
-     * @throws IllegalArgumentException if didn't match the specified event types
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -205,7 +204,8 @@ public class PageBar extends VBox implements PropertyChangeListener {
                 break;
 
             default:
-                throw new IllegalArgumentException("Unknown property: " + event);
+                //throw new IllegalArgumentException("Unknown property: " + event);
+                break;
         }
     }
 
