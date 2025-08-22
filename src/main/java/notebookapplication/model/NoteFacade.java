@@ -18,18 +18,14 @@ public class NoteFacade extends NoteSubject {
     private NoteGroup currentGroup;
     private NotePage currentPage;
 
-    /**
-     * Creates a new notebook with a default group and page.
-     */
+    /** Creates a new notebook with a default group and page.  */
     public NoteFacade() {
         this.groups = new ArrayList<>();
         support = new PropertyChangeSupport(this);
         createDefaultNotebook();
     }
 
-    /**
-     * Creates a default group when initialising the notebook.
-     */
+    /** Creates a default group when initialising the notebook.  */
     private void createDefaultNotebook() {
         NoteGroup defaultGroup = new NoteGroup();
         groups.add(defaultGroup);
@@ -39,6 +35,10 @@ public class NoteFacade extends NoteSubject {
 
     /**
      * Creates a new group and adds it to the notebook, then switches to it.
+     *
+     * @post {@code currentGroup == newGroup}
+     * @post {@code currentPage == newGroup.getPages().getFirst()}
+     * @post {@code group.getPages().isEmpty() == False}
      */
     public void createNewGroup() {
         NoteGroup newGroup = new NoteGroup();
@@ -67,6 +67,7 @@ public class NoteFacade extends NoteSubject {
      * Creates a new page in the specified group and switches to it.
      *
      * @param group the group where the new page should be created
+     * @post {@code currentPage == newPage}
      */
     public void createNewPage(NoteGroup group) {
         NotePage newPage = new NotePage();
@@ -92,6 +93,7 @@ public class NoteFacade extends NoteSubject {
      *
      * @param group the group to remove
      * @pre {@code groups.size() > 1 && groups.contains(group)}
+     * @post {@code (currentGroup == group) => (currentGroup == groups.getFirst())}
      */
     public void removeGroup(NoteGroup group) {
         if (groups.size() > 1 && groups.contains(group)) {
@@ -111,6 +113,7 @@ public class NoteFacade extends NoteSubject {
      *
      * @param page the page to remove
      * @pre {@code group != null && group.getPages().size() > 1}
+     * @post {@code (currentPage == page) => (currentPage == group.getPages().getFirst())}
      */
     public void removePage(NotePage page) {
         NoteGroup group = findGroupContaining(page);

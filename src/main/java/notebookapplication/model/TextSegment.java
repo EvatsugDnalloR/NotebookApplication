@@ -4,7 +4,8 @@ import java.io.Serializable;
 
 /**
  * Immutable record representing a segment of text with consistent styling.
- * Supports serialization for saving and loading notebook content.
+ *
+ * <p>Supports serialization for saving and loading notebook content.
  */
 public record TextSegment(String text, String cssStyle) implements Serializable {
     /**
