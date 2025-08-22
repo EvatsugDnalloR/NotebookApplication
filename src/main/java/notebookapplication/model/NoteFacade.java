@@ -1,7 +1,12 @@
 package notebookapplication.model;
 
 import java.beans.PropertyChangeSupport;
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -43,7 +48,9 @@ public class NoteFacade extends NoteSubject {
     public void createNewGroup() {
         NoteGroup newGroup = new NoteGroup();
         groups.add(newGroup);
-        support.firePropertyChange(EventPropertyNameEnum.ADD_GROUP.getPropertyName(), null, newGroup);
+        support.firePropertyChange(
+                EventPropertyNameEnum.ADD_GROUP.getPropertyName(), null, newGroup
+        );
         switchToGroup(newGroup);
     }
 
@@ -55,7 +62,9 @@ public class NoteFacade extends NoteSubject {
     public void switchToGroup(NoteGroup group) {
         NoteGroup oldGroup = currentGroup;
         currentGroup = group;
-        support.firePropertyChange(EventPropertyNameEnum.SWITCH_TO_GROUP.getPropertyName(), oldGroup, currentGroup);
+        support.firePropertyChange(
+                EventPropertyNameEnum.SWITCH_TO_GROUP.getPropertyName(), oldGroup, currentGroup
+        );
 
         if (group.getPages().isEmpty()) {
             group.addPage(new NotePage());
@@ -83,7 +92,9 @@ public class NoteFacade extends NoteSubject {
     public void switchToPage(NotePage page) {
         NotePage oldPage = currentPage;
         currentPage = page;
-        support.firePropertyChange(EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName(), oldPage, currentPage);
+        support.firePropertyChange(
+                EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName(), oldPage, currentPage
+        );
     }
 
     /**
@@ -98,7 +109,9 @@ public class NoteFacade extends NoteSubject {
     public void removeGroup(NoteGroup group) {
         if (groups.size() > 1 && groups.contains(group)) {
             groups.remove(group);
-            support.firePropertyChange(EventPropertyNameEnum.REMOVE_GROUP.getPropertyName(), group, null);
+            support.firePropertyChange(
+                    EventPropertyNameEnum.REMOVE_GROUP.getPropertyName(), group, null
+            );
 
             if (currentGroup == group) {
                 switchToGroup(groups.getFirst());

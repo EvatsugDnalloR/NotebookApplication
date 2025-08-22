@@ -1,20 +1,20 @@
 package notebookapplication.gui;
 
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import notebookapplication.model.NoteFacade;
-import notebookapplication.model.NotePage;
-import notebookapplication.model.EventPropertyNameEnum;
-import org.fxmisc.richtext.InlineCssTextArea;
-
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import notebookapplication.model.EventPropertyNameEnum;
+import notebookapplication.model.NoteFacade;
+import notebookapplication.model.NotePage;
 
 
 /**
@@ -115,11 +115,14 @@ public class Controller implements Initializable, PropertyChangeListener {
      * Responds to page switching and content changes to keep the UI synchronised.
      *
      * @param evt the property change event containing information about the change
+     * @throws IllegalArgumentException if didn't match the specified event type
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         EventPropertyNameEnum event = EventPropertyNameEnum.fromPropertyName(evt.getPropertyName());
-        if (event == null) { throw new IllegalArgumentException("Unknown property: " + evt.getPropertyName()); }
+        if (event == null) {
+            throw new IllegalArgumentException("Unknown property: " + evt.getPropertyName());
+        }
 
         switch (event) {
             case SWITCH_TO_PAGE:
@@ -134,6 +137,9 @@ public class Controller implements Initializable, PropertyChangeListener {
                     loadPageContent();
                 }
                 break;
+
+            default:
+                throw new IllegalArgumentException("Unknown property: " + event);
         }
     }
 

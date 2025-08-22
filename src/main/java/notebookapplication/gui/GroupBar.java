@@ -1,14 +1,18 @@
 package notebookapplication.gui;
 
-import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import notebookapplication.model.NoteFacade;
-import notebookapplication.model.NoteGroup;
-import notebookapplication.model.EventPropertyNameEnum;
-
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Optional;
+
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.HBox;
+import notebookapplication.model.EventPropertyNameEnum;
+import notebookapplication.model.NoteFacade;
+import notebookapplication.model.NoteGroup;
 
 
 /**
@@ -104,10 +108,11 @@ public class GroupBar extends HBox implements PropertyChangeListener {
     private void setupToggleGroup() {
         toggleGroup.selectedToggleProperty().addListener(
                 (_, oldToggle, newToggle) -> {
-            if (newToggle == null && oldToggle != null) {
-                toggleGroup.selectToggle(oldToggle);
+                if (newToggle == null && oldToggle != null) {
+                    toggleGroup.selectToggle(oldToggle);
+                }
             }
-        });
+        );
     }
 
     /**
@@ -116,11 +121,14 @@ public class GroupBar extends HBox implements PropertyChangeListener {
      * <p>Responds to group addition, removal, renaming, and selection changes.
      *
      * @param evt the property change event containing information about the change
+     * @throws IllegalArgumentException if didn't match the specified event types
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         EventPropertyNameEnum event = EventPropertyNameEnum.fromPropertyName(evt.getPropertyName());
-        if (event == null) { throw new IllegalArgumentException("Unknown property: " + evt.getPropertyName()); }
+        if (event == null) {
+            throw new IllegalArgumentException("Unknown property: " + evt.getPropertyName());
+        }
 
         switch (event) {
             case ADD_GROUP:
@@ -138,6 +146,9 @@ public class GroupBar extends HBox implements PropertyChangeListener {
             case GROUP_RENAME:
                 updateGroupName((NoteGroup) evt.getSource());
                 break;
+
+            default:
+                throw new IllegalArgumentException("Unknown property: " + event);
         }
     }
 
@@ -198,8 +209,8 @@ public class GroupBar extends HBox implements PropertyChangeListener {
         // Delete option
         MenuItem deleteItem = new MenuItem("Delete");
         deleteItem.setOnAction(_ -> facade.removeGroup(group));
-        menu.setOnShowing(_ -> {
-            deleteItem.setDisable(facade.getGroups().size() <= 1);  // update disable state dynamically
+        menu.setOnShowing(_ -> {    // update disable state dynamically
+            deleteItem.setDisable(facade.getGroups().size() <= 1);
         });
         menu.getItems().addAll(renameItem, deleteItem);
         return menu;

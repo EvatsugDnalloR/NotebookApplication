@@ -68,11 +68,15 @@ public class NotePage extends NoteSubject implements Serializable {
     public void setPageName(String pageName) {
         String oldTitle = this.pageName;
         this.pageName = pageName;
-        support.firePropertyChange(EventPropertyNameEnum.PAGE_RENAME.getPropertyName(), oldTitle, this.pageName);
+        support.firePropertyChange(
+                EventPropertyNameEnum.PAGE_RENAME.getPropertyName(), oldTitle, this.pageName
+        );
     }
 
     /**
-     * @return All text segments with their styling
+     * Get all text segments as an ordered ArrayList.
+     *
+     * @return all text segments with their styling
      */
     public List<TextSegment> getContentSegments() {
         return new ArrayList<>(contentSegments);
@@ -88,7 +92,7 @@ public class NotePage extends NoteSubject implements Serializable {
         contentSegments.clear();
         contentSegments.addAll(segments);
         support.firePropertyChange(
-                EventPropertyNameEnum.SET_CONTENT.getPropertyName(), oldContentSegments, this.contentSegments
+            EventPropertyNameEnum.SET_CONTENT.getPropertyName(), oldContentSegments, contentSegments
         );
     }
 
@@ -102,7 +106,7 @@ public class NotePage extends NoteSubject implements Serializable {
         contentSegments.clear();
         contentSegments.add(new TextSegment(text, ""));
         support.firePropertyChange(
-                EventPropertyNameEnum.SET_CONTENT.getPropertyName(), null, this.contentSegments
+                EventPropertyNameEnum.SET_CONTENT.getPropertyName(), null, contentSegments
         );
     }
 

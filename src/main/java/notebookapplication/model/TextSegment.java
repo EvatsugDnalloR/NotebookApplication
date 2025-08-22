@@ -30,9 +30,15 @@ public record TextSegment(String text, String cssStyle) implements Serializable 
         style.append("font-size: ").append(fontSize).append("px; ");
         style.append("color: ").append(color).append("; ");
 
-        if (bold) style.append("font-weight: bold; ");
-        if (italic) style.append("font-style: italic; ");
-        if (underline) style.append("text-decoration: underline; ");
+        if (bold) {
+            style.append("font-weight: bold; ");
+        }
+        if (italic) {
+            style.append("font-style: italic; ");
+        }
+        if (underline) {
+            style.append("text-decoration: underline; ");
+        }
 
         return new TextSegment(text, style.toString());
     }

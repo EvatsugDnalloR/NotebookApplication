@@ -57,7 +57,9 @@ public class NoteGroup extends NoteSubject implements Serializable {
     public void setGroupName(String groupName) {
         String oldName = this.groupName;
         this.groupName = groupName;
-        support.firePropertyChange(EventPropertyNameEnum.GROUP_RENAME.getPropertyName(), oldName, this.groupName);
+        support.firePropertyChange(
+                EventPropertyNameEnum.GROUP_RENAME.getPropertyName(), oldName, this.groupName
+        );
     }
 
     public List<NotePage> getPages() {

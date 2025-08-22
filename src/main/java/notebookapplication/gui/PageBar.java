@@ -1,15 +1,19 @@
 package notebookapplication.gui;
 
-import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
-import notebookapplication.model.NoteFacade;
-import notebookapplication.model.NoteGroup;
-import notebookapplication.model.NotePage;
-import notebookapplication.model.EventPropertyNameEnum;
-
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Optional;
+
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.VBox;
+import notebookapplication.model.EventPropertyNameEnum;
+import notebookapplication.model.NoteFacade;
+import notebookapplication.model.NoteGroup;
+import notebookapplication.model.NotePage;
 
 
 /**
@@ -73,7 +77,7 @@ public class PageBar extends VBox implements PropertyChangeListener {
             addPageButton(page);
         }
         selectCurrentPage();
-//        currentGroup.addPropertyChangeListener(this);   // the line that causes a major UI bug :)
+        //currentGroup.addPropertyChangeListener(this);   // the line that causes a major UI bug :)
     }
 
     /**
@@ -125,10 +129,11 @@ public class PageBar extends VBox implements PropertyChangeListener {
     private void setupToggleGroup() {
         toggleGroup.selectedToggleProperty().addListener(
                 (obs, oldToggle, newToggle) -> {
-            if (newToggle == null && oldToggle != null) {
-                toggleGroup.selectToggle(oldToggle);
+                if (newToggle == null && oldToggle != null) {
+                    toggleGroup.selectToggle(oldToggle);
+                }
             }
-        });
+        );
     }
 
     /**
@@ -140,7 +145,8 @@ public class PageBar extends VBox implements PropertyChangeListener {
         if (currentGroup != null) {
             currentGroup.removePropertyChangeListener(this);
             for (NotePage page : currentGroup.getPages()) {
-                page.removePropertyChangeListener(this);    // remove listeners from all pages in the current group
+                // remove listeners from all pages in the current group
+                page.removePropertyChangeListener(this);
             }
         }
 
@@ -153,11 +159,14 @@ public class PageBar extends VBox implements PropertyChangeListener {
      * <p>Responds to group switching, page addition, removal, renaming, and selection changes.
      *
      * @param evt the property change event containing information about the change
+     * @throws IllegalArgumentException if didn't match the specified event types
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         EventPropertyNameEnum event = EventPropertyNameEnum.fromPropertyName(evt.getPropertyName());
-        if (event == null) { throw new IllegalArgumentException("Unknown property: " + evt.getPropertyName()); }
+        if (event == null) {
+            throw new IllegalArgumentException("Unknown property: " + evt.getPropertyName());
+        }
 
         switch (event) {
             case SWITCH_TO_GROUP:
@@ -194,6 +203,9 @@ public class PageBar extends VBox implements PropertyChangeListener {
             case PAGE_RENAME:
                 updatePageName((NotePage) evt.getSource());
                 break;
+
+            default:
+                throw new IllegalArgumentException("Unknown property: " + event);
         }
     }
 
@@ -250,14 +262,14 @@ public class PageBar extends VBox implements PropertyChangeListener {
 
         // Rename option
         MenuItem renameItem = new MenuItem("Rename");
-        renameItem.setOnAction(e -> renamePage(page));
+        renameItem.setOnAction(_ -> renamePage(page));
 
         // Delete option
         MenuItem deleteItem = new MenuItem("Delete");
-        deleteItem.setOnAction(e -> facade.removePage(page));
+        deleteItem.setOnAction(_ -> facade.removePage(page));
 
-        menu.setOnShowing(e -> {
-            deleteItem.setDisable(currentGroup.getPages().size() <= 1);  // update disable state dynamically
+        menu.setOnShowing(_ -> {    // update disable state dynamically
+            deleteItem.setDisable(currentGroup.getPages().size() <= 1);
         });
         menu.getItems().addAll(renameItem, deleteItem);
         return menu;

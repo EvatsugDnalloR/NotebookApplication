@@ -1,9 +1,14 @@
 package notebookapplication.model;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import java.util.List;
 
 
 class NoteFacadeTest {
@@ -40,7 +45,8 @@ class NoteFacadeTest {
     }
 
     /**
-     * Testing if {@code createNewGroup} does fire ADD_GROUP, SWITCH_TO_GROUP, SWITCH_TO_PAGE events in this order.
+     * Testing if {@code createNewGroup} does fire ADD_GROUP,
+     * SWITCH_TO_GROUP, and SWITCH_TO_PAGE events in this order.
      */
     @Test
     void createNewGroup_FiresCorrectEventSequence() {
@@ -50,13 +56,16 @@ class NoteFacadeTest {
         // Assert - Check all events were fired
         List<String> eventTypes = listener.getEventTypes();
         assertTrue(eventTypes.size() >= 3, "Expected at least 3 events");
-        assertTrue(listener.containsEventType(EventPropertyNameEnum.ADD_GROUP.getPropertyName()),
-                "ADD_GROUP event should be fired");
-        assertTrue(listener.containsEventType(EventPropertyNameEnum.SWITCH_TO_GROUP.getPropertyName()),
-                "SWITCH_TO_GROUP event should be fired");
+        assertTrue(listener.containsEventType(
+                EventPropertyNameEnum.ADD_GROUP.getPropertyName()
+                ), "ADD_GROUP event should be fired");
+        assertTrue(listener.containsEventType(
+                EventPropertyNameEnum.SWITCH_TO_GROUP.getPropertyName()
+                ), "SWITCH_TO_GROUP event should be fired");
 
-        assertTrue(listener.containsEventType(EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName()),
-                "SWITCH_TO_PAGE event should be fired");
+        assertTrue(listener.containsEventType(
+                EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName()
+                ), "SWITCH_TO_PAGE event should be fired");
     }
 
     /** Testing if {@code createNewGroup} does ensure new group has at least one page.  */
@@ -111,7 +120,7 @@ class NoteFacadeTest {
         assertTrue(currentGroup.getPages().contains(newPage));
     }
 
-    /** Testing if {@code createNewPage} works with different groups  */
+    /** Testing if {@code createNewPage} works with different groups.  */
     @Test
     void createNewPage_WorksWithDifferentGroups() {
         // Arrange
@@ -125,7 +134,8 @@ class NoteFacadeTest {
     }
 
     /**
-     * Testing if {@code createNewPage} does fire ADD_PAGE, SWITCH_TO_GROUP, SWITCH_TO_PAGE events in this order.
+     * Testing if {@code createNewPage} does fire ADD_PAGE,
+     * SWITCH_TO_GROUP, and SWITCH_TO_PAGE events in this order.
      */
     @Test
     void createNewPage_FiresCorrectEventSequence() {
@@ -139,13 +149,16 @@ class NoteFacadeTest {
         // Assert - Check all events were fired
         List<String> eventTypes = listener.getEventTypes();
         assertTrue(eventTypes.size() >= 3, "Expected at least 3 events");
-        assertTrue(listener.containsEventType(EventPropertyNameEnum.ADD_PAGE.getPropertyName()),
-                "ADD_PAGE event should be fired");
-        assertTrue(listener.containsEventType(EventPropertyNameEnum.SWITCH_TO_GROUP.getPropertyName()),
-                "SWITCH_TO_GROUP event should be fired");
+        assertTrue(listener.containsEventType(
+                EventPropertyNameEnum.ADD_PAGE.getPropertyName()
+                ), "ADD_PAGE event should be fired");
+        assertTrue(listener.containsEventType(
+                EventPropertyNameEnum.SWITCH_TO_GROUP.getPropertyName()
+                ), "SWITCH_TO_GROUP event should be fired");
 
-        assertTrue(listener.containsEventType(EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName()),
-                "SWITCH_TO_PAGE event should be fired");
+        assertTrue(listener.containsEventType(
+                EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName()
+                ), "SWITCH_TO_PAGE event should be fired");
     }
 
     /** Testing if {@code removeGroup} does remove specified group when multiple groups exist.  */
@@ -179,7 +192,9 @@ class NoteFacadeTest {
         assertTrue(groups.contains(lastGroup));
     }
 
-    /** Testing if {@code removeGroup} does switch to the first group when the current group is removed.   */
+    /** Testing if {@code removeGroup} does switch to the first group
+     * when the current group is removed.
+     */
     @Test
     void removeGroup_SwitchesWhenCurrentRemoved() {
         // Arrange
@@ -206,7 +221,7 @@ class NoteFacadeTest {
     /**
      * Testing if {@code removeGroup} does fire REMOVE_GROUP event,
      * followed by SWITCH_TO_GROUP and SWITCH_TO_PAGE events
-     * while the current group is removed
+     * while the current group is removed.
      */
     @Test
     void removeGroup_FiresCorrectEventSequence() {
@@ -222,13 +237,16 @@ class NoteFacadeTest {
         // Assert - Check all events were fired
         List<String> eventTypes = listener.getEventTypes();
         assertTrue(eventTypes.size() >= 3, "Expected at least 3 events");
-        assertTrue(listener.containsEventType(EventPropertyNameEnum.REMOVE_GROUP.getPropertyName()),
-                "REMOVE_GROUP event should be fired");
-        assertTrue(listener.containsEventType(EventPropertyNameEnum.SWITCH_TO_GROUP.getPropertyName()),
-                "SWITCH_TO_GROUP event should be fired");
+        assertTrue(listener.containsEventType(
+                EventPropertyNameEnum.REMOVE_GROUP.getPropertyName()
+                ), "REMOVE_GROUP event should be fired");
+        assertTrue(listener.containsEventType(
+                EventPropertyNameEnum.SWITCH_TO_GROUP.getPropertyName()
+                ), "SWITCH_TO_GROUP event should be fired");
 
-        assertTrue(listener.containsEventType(EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName()),
-                "SWITCH_TO_PAGE event should be fired");
+        assertTrue(listener.containsEventType(
+                EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName()
+                ), "SWITCH_TO_PAGE event should be fired");
     }
 
     /** Testing if {@code removePage} removes the specified page when multiple pages exist.  */
@@ -312,7 +330,7 @@ class NoteFacadeTest {
 
     /**
      * Testing if {@code removePage} does fire REMOVE_PAGE event,
-     * followed by SWITCH_TO_PAGE events while the current page is removed
+     * followed by SWITCH_TO_PAGE events while the current page is removed.
      */
     @Test
     void removePage_FiresCorrectEventSequence() {
@@ -321,7 +339,9 @@ class NoteFacadeTest {
         // Arrange
         facade.createNewGroup();
         facade.getCurrentGroup().addPropertyChangeListener(listener);
-        facade.createNewPage(facade.getCurrentGroup()); // ensure we have multiple pages in the group
+
+        // Ensure we have multiple pages in the group
+        facade.createNewPage(facade.getCurrentGroup());
         NotePage pageToRemove = facade.getCurrentPage();   // remove the current page
 
         facade.removePage(pageToRemove);  // act
@@ -329,9 +349,11 @@ class NoteFacadeTest {
         // Assert - Check all events were fired
         List<String> eventTypes = listener.getEventTypes();
         assertTrue(eventTypes.size() >= 2, "Expected at least 2 events");
-        assertTrue(listener.containsEventType(EventPropertyNameEnum.REMOVE_PAGE.getPropertyName()),
-                "REMOVE_PAGE event should be fired");
-        assertTrue(listener.containsEventType(EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName()),
-                "SWITCH_TO_PAGE event should be fired");
+        assertTrue(listener.containsEventType(
+                EventPropertyNameEnum.REMOVE_PAGE.getPropertyName()
+                ), "REMOVE_PAGE event should be fired");
+        assertTrue(listener.containsEventType(
+                EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName()
+                ), "SWITCH_TO_PAGE event should be fired");
     }
 }

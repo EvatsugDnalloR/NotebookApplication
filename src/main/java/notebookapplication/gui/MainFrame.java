@@ -28,7 +28,8 @@ public class MainFrame extends Application {
      * <p>Called after the init method has returned,
      * and after the system is ready for the application to begin running.
      *
-     * @param stage the primary stage for this application, onto which the application scene can be set
+     * @param stage the primary stage for this application,
+     *              onto which the application scene can be set
      * @throws Exception if something goes wrong during application startup
      */
     @Override
