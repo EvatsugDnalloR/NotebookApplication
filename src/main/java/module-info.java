@@ -3,15 +3,15 @@ module notebookapplication {
     requires javafx.fxml;
     requires javafx.web;
 
-    requires org.controlsfx.controls;
-    requires com.dlsc.formsfx;
-    requires net.synedra.validatorfx;
-    requires org.kordamp.ikonli.javafx;
-    requires eu.hansolo.tilesfx;
+//    requires org.controlsfx.controls;
+//    requires com.dlsc.formsfx;
+//    requires net.synedra.validatorfx;
+//    requires org.kordamp.ikonli.javafx;
+//    requires eu.hansolo.tilesfx;
     requires java.desktop;
 
-    requires org.fxmisc.richtext;
-    requires reactfx;
+//    requires org.fxmisc.richtext;
+//    requires reactfx;
 
     exports notebookapplication.gui;
     exports notebookapplication.model;
