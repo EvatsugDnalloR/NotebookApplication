@@ -3,6 +3,8 @@ package notebookapplication.gui;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -11,7 +13,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.web.HTMLEditor;       // NEW: replaced TextArea import
+import javafx.scene.web.HTMLEditor;
 import notebookapplication.model.EventPropertyNameEnum;
 import notebookapplication.model.NoteFacade;
 import notebookapplication.model.NotePage;
@@ -25,6 +27,8 @@ import notebookapplication.model.NotePage;
  * <p>Implements both Initializable and PropertyChangeListener interfaces.
  */
 public class Controller implements Initializable, PropertyChangeListener {
+    private static final Logger LOGGER =
+            Logger.getLogger(Controller.class.getName());
 
     /**
      * The main content area where users can view and edit the text of the current note page.
@@ -33,7 +37,7 @@ public class Controller implements Initializable, PropertyChangeListener {
      * experience with a built-in toolbar for bold, italic, underline, font family,
      * font size, text color, and other formatting options.
      */
-    @FXML private HTMLEditor contentArea;   // CHANGED: was TextArea
+    @FXML private HTMLEditor contentArea;
 
     /**
      * Container for the GroupBar component that displays note groups as horizontal tabs
@@ -143,8 +147,6 @@ public class Controller implements Initializable, PropertyChangeListener {
         }
     }
 
-    // CHANGED: now saves HTML content instead of plain text
-
     /**
      * Saves the current content from the HTMLEditor to the active page model.
      *
@@ -159,8 +161,6 @@ public class Controller implements Initializable, PropertyChangeListener {
             currentPage.setHtmlBody(bodyContent);
         }
     }
-
-    // CHANGED: now loads HTML content instead of plain text
 
     /**
      * Loads content from the active page model into the HTMLEditor.
@@ -177,8 +177,6 @@ public class Controller implements Initializable, PropertyChangeListener {
         }
     }
 
-    // NEW: helper to wrap body content into a full HTML document for HTMLEditor
-
     /**
      * Wraps HTML body content in a complete HTML document suitable for
      * {@link HTMLEditor#setHtmlText(String)}.
@@ -194,8 +192,6 @@ public class Controller implements Initializable, PropertyChangeListener {
                 + bodyContent
                 + "</body></html>";
     }
-
-    // NEW: helper to extract body content from HTMLEditor's full HTML output
 
     /**
      * Extracts the inner body content from an HTMLEditor-produced HTML document.
@@ -246,7 +242,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         try {
             facade.saveNotebook("notebook.dat");
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to save notebook state", e);
         }
     }
 }

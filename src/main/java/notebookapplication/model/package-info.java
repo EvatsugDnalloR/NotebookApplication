@@ -1,24 +1,20 @@
 /**
- * The GUI module for the JavaFX NotebookApplication.
+ * The model module for the JavaFX NotebookApplication.
  *
- * <p>This module contains the JavaFX-based user interface components that provide
- * visual representation and interaction with the notebook model.
- * It implements the Observer pattern to synchronise with model changes.</p>
+ * <p>This module contains the core business logic and data structures for managing
+ * notebooks, note groups, and individual note pages.
+ * It implements the Observer pattern through property change support to enable UI synchronisation.</p>
  *
  * <h2>Key Components:</h2>
  * <ul>
- *   <li><b>MainFrame</b> - Main application class that initialises the JavaFX stage</li>
- *   <li><b>Controller</b> - Central controller that coordinates between model and view components</li>
- *   <li><b>GroupBar</b> - Custom UI component for managing and displaying note groups as tabs</li>
- *   <li><b>PageBar</b> - Custom UI component for managing and displaying note pages as tabs</li>
+ *   <li><b>NoteFacade</b> - Main facade class providing high-level operations for notebook management</li>
+ *   <li><b>NoteGroup</b> - Represents a collection of note pages with group-level operations</li>
+ *   <li><b>NotePage</b> - Represents an individual note page with content and styling</li>
+ *   <li><b>NoteSubject</b> - Abstract base class providing property change support</li>
+ *   <li><b>EventPropertyNameEnum</b> - Enumeration of property change event types</li>
  * </ul>
  *
- * <p>The module provides a responsive interface for creating, editing, organising,
- * and navigating between notes and note groups. It handles user interactions and
- * translates them into model operations through the facade.</p>
- *
- * <p>The UI is designed with a main content area for note editing, a horizontal
- * group bar at the top, and a vertical page bar on the side for navigation,
- * as meant for OneNote-like UI.</p>
+ * <p>The module handles serialization/deserialization of notebook data and maintains
+ * the complete state of the application's data model.</p>
  */
 package notebookapplication.model;

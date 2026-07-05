@@ -77,7 +77,6 @@ public class PageBar extends VBox implements PropertyChangeListener {
             addPageButton(page);
         }
         selectCurrentPage();
-        //currentGroup.addPropertyChangeListener(this);   // the line that causes a major UI bug :)
     }
 
     /**
