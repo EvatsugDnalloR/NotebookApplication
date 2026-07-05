@@ -9,9 +9,9 @@ import java.util.ResourceBundle;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.web.HTMLEditor;       // NEW: replaced TextArea import
 import notebookapplication.model.EventPropertyNameEnum;
 import notebookapplication.model.NoteFacade;
 import notebookapplication.model.NotePage;
@@ -25,19 +25,15 @@ import notebookapplication.model.NotePage;
  * <p>Implements both Initializable and PropertyChangeListener interfaces.
  */
 public class Controller implements Initializable, PropertyChangeListener {
-    /*
-    TODO: Replace TextArea by InlineCssTextArea and apply the text editing features.
-    TODO: Complete basic UI of the NotebookApplication.
-     */
 
     /**
      * The main content area where users can view and edit the text of the current note page.
      *
-     * <p>This {@code TextArea} displays the plain text content of the currently selected NotePage,
-     * should be later on updated to {@code InlineCssTextArea} that supports
-     * advanced text editing features.
+     * <p>Uses JavaFX's built-in {@code HTMLEditor} which provides a WYSIWYG rich-text editing
+     * experience with a built-in toolbar for bold, italic, underline, font family,
+     * font size, text color, and other formatting options.
      */
-    @FXML private TextArea contentArea;
+    @FXML private HTMLEditor contentArea;   // CHANGED: was TextArea
 
     /**
      * Container for the GroupBar component that displays note groups as horizontal tabs
@@ -95,7 +91,7 @@ public class Controller implements Initializable, PropertyChangeListener {
      */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Initialize GUI components with facade
+        // Initialise GUI components with facade
         GroupBar groupBar = new GroupBar(facade);
         PageBar pageBar = new PageBar(facade);
         groupBarContainer.getChildren().addFirst(groupBar);
@@ -143,32 +139,101 @@ public class Controller implements Initializable, PropertyChangeListener {
                 break;
 
             default:
-                //throw new IllegalArgumentException("Unknown property: " + event);
                 break;
         }
     }
 
+    // CHANGED: now saves HTML content instead of plain text
+
     /**
-     * Saves the current content of the text area to the active page model.
+     * Saves the current content from the HTMLEditor to the active page model.
      *
-     * <p>Called before switching pages to ensure content is persisted.
+     * <p>Extracts the body content from the HTMLEditor's full HTML document and
+     * stores it on the model via {@link NotePage#setHtmlBody(String)}.
+     * Called before switching pages to ensure content is persisted.
      */
     private void saveCurrentContent() {
         if (currentPage != null) {
-            currentPage.setPlainText(contentArea.getText());
+            String fullHtml = contentArea.getHtmlText();
+            String bodyContent = extractBodyContent(fullHtml);
+            currentPage.setHtmlBody(bodyContent);
         }
     }
 
-    /**
-     * Loads content from the active page model into the text area.
-     *
-     * <p>Called after page switching or when content changes externally.
-     */
+    // CHANGED: now loads HTML content instead of plain text
 
+    /**
+     * Loads content from the active page model into the HTMLEditor.
+     *
+     * <p>Generates HTML from the page model via {@link NotePage#toHtml()},
+     * wraps it in a full HTML document, and sets it on the editor.
+     * Called after page switching or when content changes externally.
+     */
     private void loadPageContent() {
         if (currentPage != null) {
-            contentArea.setText(currentPage.getPlainTextContent());
+            String bodyHtml = currentPage.toHtml();
+            String fullDocument = wrapHtmlDocument(bodyHtml);
+            contentArea.setHtmlText(fullDocument);
         }
+    }
+
+    // NEW: helper to wrap body content into a full HTML document for HTMLEditor
+
+    /**
+     * Wraps HTML body content in a complete HTML document suitable for
+     * {@link HTMLEditor#setHtmlText(String)}.
+     *
+     * <p>The {@code contenteditable="true"} attribute on the body tag is required
+     * by HTMLEditor; without it the editor becomes read-only.
+     *
+     * @param bodyContent the inner HTML to place inside the body tag
+     * @return a complete HTML document string
+     */
+    private String wrapHtmlDocument(String bodyContent) {
+        return "<html><head></head><body contenteditable=\"true\">"
+                + bodyContent
+                + "</body></html>";
+    }
+
+    // NEW: helper to extract body content from HTMLEditor's full HTML output
+
+    /**
+     * Extracts the inner body content from an HTMLEditor-produced HTML document.
+     *
+     * <p>HTMLEditor's {@link HTMLEditor#getHtmlText()} returns a full HTML document:
+     * {@code <html><head>...</head><body contenteditable="true">...content...</body></html>}.
+     * This method strips the outer document structure and our own wrapper div
+     * to retrieve just the user-editable content.
+     *
+     * @param fullHtml the complete HTML document from HTMLEditor
+     * @return the inner body HTML content, with wrapper div removed if present
+     */
+    private String extractBodyContent(String fullHtml) {
+        // Locate the <body> tag
+        int bodyTagStart = fullHtml.indexOf("<body");
+        if (bodyTagStart == -1) {
+            // No body tag found — return content as-is (defensive fallback)
+            return fullHtml;
+        }
+
+        int bodyContentStart = fullHtml.indexOf(">", bodyTagStart) + 1;
+        int bodyEnd = fullHtml.indexOf("</body>", bodyContentStart);
+        if (bodyEnd == -1) {
+            // No closing body tag — return everything after <body...>
+            return fullHtml.substring(bodyContentStart);
+        }
+
+        String bodyContent = fullHtml.substring(bodyContentStart, bodyEnd).trim();
+
+        // Strip our own wrapper div if present (added by NotePage.toHtml())
+        final String wrapperStart = "<div class='note-content'>";
+        final String wrapperEnd = "</div>";
+        if (bodyContent.startsWith(wrapperStart) && bodyContent.endsWith(wrapperEnd)) {
+            bodyContent = bodyContent.substring(wrapperStart.length(),
+                    bodyContent.length() - wrapperEnd.length());
+        }
+
+        return bodyContent;
     }
 
     /**

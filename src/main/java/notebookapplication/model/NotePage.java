@@ -1,6 +1,7 @@
 package notebookapplication.model;
 
 import java.beans.PropertyChangeSupport;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,17 +13,33 @@ import java.util.UUID;
  *
  * <p>Each page maintains a collection of text segments with individual styling and implemented
  * model-observer pattern by property change notifications, for UI synchronisation.
+ *
+ * <p>Content is stored in two forms:
+ * <ul>
+ *   <li>{@code htmlBodyContent} — raw HTML body from the HTMLEditor, takes precedence in
+ *       {@link #toHtml()}. This is the primary storage when the GUI uses the HTML editor.</li>
+ *   <li>{@code contentSegments} — structured list of {@link TextSegment} records with
+ *       per-segment CSS styling. Used as fallback when no HTML body has been stored.</li>
+ * </ul>
  */
 public class NotePage extends NoteSubject implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 2L;    // CHANGED: added for serialization stability
+
     private final UUID id;
     private String pageName;
     private final List<TextSegment> contentSegments;    // contents of the page stored
+
+    // NEW: raw HTML body content from HTMLEditor, takes precedence in toHtml()
+    private String htmlBodyContent;
 
     /** Creates a new note page with default title and empty content. */
     public NotePage() {
         this.id = UUID.randomUUID();
         this.pageName = "Untitled Page";
         this.contentSegments = new ArrayList<>();
+        this.htmlBodyContent = null;    // NEW
         support = new PropertyChangeSupport(this);
     }
 
@@ -35,6 +52,7 @@ public class NotePage extends NoteSubject implements Serializable {
         this.id = UUID.randomUUID();
         this.pageName = pageName;
         this.contentSegments = new ArrayList<>();
+        this.htmlBodyContent = null;    // NEW
         support = new PropertyChangeSupport(this);
     }
 
@@ -49,6 +67,7 @@ public class NotePage extends NoteSubject implements Serializable {
         this.id = id;
         this.pageName = pageName;
         this.contentSegments = new ArrayList<>(segments);
+        this.htmlBodyContent = null;    // NEW
         support = new PropertyChangeSupport(this);
     }
 
@@ -73,6 +92,30 @@ public class NotePage extends NoteSubject implements Serializable {
         );
     }
 
+    // NEW: getter and setter for raw HTML body content
+
+    /**
+     * Returns the raw HTML body content stored by the HTMLEditor.
+     *
+     * @return the HTML body string, or null if no HTML content has been stored yet
+     */
+    public String getHtmlBody() {
+        return htmlBodyContent;
+    }
+
+    /**
+     * Stores raw HTML body content from the HTMLEditor.
+     *
+     * <p>After calling this method, {@link #toHtml()} will return this content
+     * (wrapped in the standard {@code <div class='note-content'>}) instead of
+     * generating HTML from {@code contentSegments}.
+     *
+     * @param html the HTML body content to store
+     */
+    public void setHtmlBody(String html) {
+        this.htmlBodyContent = html;
+    }
+
     /**
      * Get all text segments as an ordered ArrayList.
      *
@@ -85,24 +128,31 @@ public class NotePage extends NoteSubject implements Serializable {
     /**
      * Replaces all content segments with new content and notifies listeners.
      *
+     * <p>This method invalidates any previously stored {@code htmlBodyContent} since
+     * the content is being replaced programmatically.
+     *
      * @param segments the new text segments to replace current content
      */
     public void setContent(List<TextSegment> segments) {
+        this.htmlBodyContent = null;    // NEW: invalidate cached HTML
         List<TextSegment> oldContentSegments = getContentSegments();
         contentSegments.clear();
         contentSegments.addAll(segments);
         support.firePropertyChange(
-            EventPropertyNameEnum.SET_CONTENT.getPropertyName(), oldContentSegments, contentSegments
+                EventPropertyNameEnum.SET_CONTENT.getPropertyName(), oldContentSegments, contentSegments
         );
     }
 
     /**
      * Replaces all content with plain text (no styling) and notifies listeners.
      *
+     * <p>This method invalidates any previously stored {@code htmlBodyContent} since
+     * the content is being replaced programmatically.
+     *
      * @param text the plain text content to set
      */
     public void setPlainText(String text) {
-
+        this.htmlBodyContent = null;    // NEW: invalidate cached HTML
         contentSegments.clear();
         contentSegments.add(new TextSegment(text, ""));
         support.firePropertyChange(
@@ -123,36 +173,66 @@ public class NotePage extends NoteSubject implements Serializable {
         return sb.toString();
     }
 
+    // CHANGED: toHtml() now prefers htmlBodyContent when available
+
     /**
      * Converts the content to HTML for storage and rendering.
+     *
+     * <p>If {@code htmlBodyContent} has been set (e.g. by the HTMLEditor), that content
+     * is returned wrapped in the standard {@code <div class='note-content'>} wrapper.
+     * Otherwise, HTML is generated from the {@code contentSegments} list.
      *
      * @return HTML representation with styling
      */
     public String toHtml() {
+        // NEW: prefer raw HTML body if available
+        if (htmlBodyContent != null && !htmlBodyContent.isEmpty()) {
+            return "<div class='note-content'>" + htmlBodyContent + "</div>";
+        }
+
+        // Fallback: generate from contentSegments
         StringBuilder html = new StringBuilder();
         html.append("<div class='note-content'>");
 
-        for (TextSegment segment : contentSegments) {
-            html.append("<span style='")
-                    .append(segment.cssStyle())
-                    .append("'>")
-                    .append(escapeHtml(segment.text()))
-                    .append("</span>");
+        if (contentSegments.isEmpty()) {
+            html.append("<br>");    // NEW: ensure the editor has clickable content
+        } else {
+            for (TextSegment segment : contentSegments) {
+                html.append("<span style='")
+                        .append(segment.cssStyle())
+                        .append("'>")
+                        .append(escapeHtml(segment.text()))
+                        .append("</span>");
+            }
         }
 
         html.append("</div>");
         return html.toString();
     }
 
+    // CHANGED: fromHtml() now also stores the raw HTML for HTMLEditor use
+
     /**
      * Loads content from HTML representation.
      *
-     * @param html HTML string with styling
+     * <p>Stores the body content as raw HTML for the HTMLEditor and also attempts to
+     * parse it into {@code TextSegment} objects for backward compatibility.
+     *
+     * @param html HTML string with styling, optionally wrapped in
+     *             {@code <div class='note-content'>}
      */
     public void fromHtml(String html) {
+        // NEW: strip wrapper div and store raw HTML
+        String innerHtml = html;
+        if (html.startsWith("<div class='note-content'>") && html.endsWith("</div>")) {
+            innerHtml = html.substring("<div class='note-content'>".length(),
+                    html.length() - "</div>".length());
+        }
+        this.htmlBodyContent = innerHtml;
+
+        // Existing: parse into contentSegments for backward compatibility
         contentSegments.clear();
-        // Simplified parser - in practice use a proper HTML parser
-        String[] parts = html.split("<span style='|</span>");
+        String[] parts = innerHtml.split("<span style='|</span>");
 
         for (int i = 1; i < parts.length; i += 2) {
             String styleAndText = parts[i];
