@@ -37,7 +37,7 @@ public class MainFrame extends Application {
         controller = new Controller();
         FXMLLoader fxmlLoader = new FXMLLoader(MainFrame.class.getResource("MainFrame-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load());
-        stage.setTitle("Hello!");
+        stage.setTitle("JavaFX Notebook");
         stage.setScene(scene);
         stage.show();
     }

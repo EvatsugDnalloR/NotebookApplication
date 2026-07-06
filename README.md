@@ -12,11 +12,14 @@ A OneNote-like notebook application using JavaFX as GUI framework.
 [UML Diagrams >>](uml_diagrams/diagrams.md)
 
 ## Features ToDo List
-- [x] Basic text input management (with UndoRedo) and OneNote-like NoteGroup-NotePage management
-- [x] Basic text editing features (colour, fonts, size etc.)
+- [x] Basic text input and OneNote-like NoteGroup-NotePage management
+- [x] Text editing features through `HTMLEditor`
 - [x] Completed basic UI, including toolbar, menubar etc.
 - [x] Advanced text grouping features (e.g. bullet points, checkboxes,
   and this paragraph should now be grouped by this checkbox, just as in OneNote)
 - [x] Manuel save/load and Auto-save/load (while quitting app) to/from a local file
-- [ ] UndoRedo feature for NoteGroup-NotePage management and text grouping features
+- [x] UndoRedo feature for NoteGroup-NotePage management
+- [ ] Better "About" info in the Help menu
 - [ ] Better UI design (e.g. applying Material UI in JavaFX)
+- [ ] Switch from `HTMLEditor` to `RichTextFX` for proper keystroke undo/redo handling,
+  and re-implement text editing features (colour, fonts, size, etc.)
