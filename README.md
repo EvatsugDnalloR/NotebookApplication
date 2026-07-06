@@ -1,5 +1,6 @@
 # NotebookApplication
 A OneNote-like notebook application using JavaFX as GUI framework.
+![Snapshots](images/snapshot_1.png)
 
 ## Overview
 - Managing note pages within note groups just like OneNote
