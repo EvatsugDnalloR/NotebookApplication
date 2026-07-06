@@ -23,6 +23,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.HTMLEditor;
 import javafx.stage.Stage;
+import notebookapplication.command.UndoRedo;
 import notebookapplication.model.EventPropertyNameEnum;
 import notebookapplication.model.NoteFacade;
 import notebookapplication.model.NotePage;
@@ -43,7 +44,7 @@ public class Controller implements Initializable, PropertyChangeListener {
      *
      * <p>Uses JavaFX's built-in {@code HTMLEditor} which provides a WYSIWYG rich-text editing
      * experience with a built-in toolbar for bold, italic, underline, font family,
-     * font size, text color, and other formatting options.
+     * font size, text colour, and other formatting options.
      */
     @FXML private HTMLEditor contentArea;
 
@@ -93,8 +94,21 @@ public class Controller implements Initializable, PropertyChangeListener {
      */
     @FXML private MenuItem menuAbout;
 
+    /**
+     * Menu item under Edit → Undo. Keyboard shortcut: Ctrl+Z.
+     */
+    @FXML private MenuItem menuUndo;
+
+    /**
+     * Menu item under Edit → Redo. Keyboard shortcut: Ctrl+Y.
+     */
+    @FXML private MenuItem menuRedo;
+
+    /** The undo/redo manager shared with the facade. */
+    private final UndoRedo undoRedo = new UndoRedo();
+
     /** The main facade that provides access to all notebook model operations.  */
-    private final NoteFacade facade = new NoteFacade();
+    private final NoteFacade facade = new NoteFacade(undoRedo);
 
     /**
      * The current page being edited in the content area.
@@ -177,6 +191,14 @@ public class Controller implements Initializable, PropertyChangeListener {
         menuLoad.setOnAction(_ -> handleLoad());
         menuClose.setOnAction(_ -> handleClose());
         menuAbout.setOnAction(_ -> handleAbout());
+        menuUndo.setAccelerator(
+                new KeyCodeCombination(KeyCode.Z, KeyCombination.CONTROL_DOWN,
+                        KeyCombination.SHIFT_DOWN));
+        menuRedo.setAccelerator(
+                new KeyCodeCombination(KeyCode.Y, KeyCombination.CONTROL_DOWN,
+                        KeyCombination.SHIFT_DOWN));
+        menuUndo.setOnAction(_ -> handleUndo());
+        menuRedo.setOnAction(_ -> handleRedo());
     }
 
     /**
@@ -329,6 +351,7 @@ public class Controller implements Initializable, PropertyChangeListener {
 
     /** Shows an About dialogue with application information. */
     private void handleAbout() {
+        // TODO: better About info including author name, GitHub repo link, license info etc.
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
         alert.setHeaderText("NotebookApplication v1.0.0");
@@ -349,5 +372,21 @@ public class Controller implements Initializable, PropertyChangeListener {
                 """);
         alert.getDialogPane().setPrefWidth(420);
         alert.showAndWait();
+    }
+
+    /** Undoes the most recent command (text edit or app operation). */
+    private void handleUndo() {
+        saveCurrentContent();
+        undoRedo.undo();
+        currentPage = facade.getCurrentPage();
+        loadPageContent();
+    }
+
+    /** Redoes the most recently undone command. */
+    private void handleRedo() {
+        saveCurrentContent();
+        undoRedo.redo();
+        currentPage = facade.getCurrentPage();
+        loadPageContent();
     }
 }

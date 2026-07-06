@@ -7,6 +7,7 @@ module notebookapplication {
 
     exports notebookapplication.gui;
     exports notebookapplication.model;
+    exports notebookapplication.command;
 
     opens notebookapplication.gui to javafx.fxml;
 }
