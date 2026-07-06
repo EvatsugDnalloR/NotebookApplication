@@ -1,6 +1,5 @@
 # NotebookApplication
 
----
 A OneNote-like notebook application built with JavaFX 24.
 
 ![Snapshots](images/snapshot_1.png)
