@@ -2,14 +2,18 @@ package notebookapplication.gui;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
@@ -18,6 +22,7 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.HTMLEditor;
+import javafx.stage.Stage;
 import notebookapplication.model.EventPropertyNameEnum;
 import notebookapplication.model.NoteFacade;
 import notebookapplication.model.NotePage;
@@ -31,10 +36,7 @@ import notebookapplication.model.NotePage;
  * <p>Implements both Initializable and PropertyChangeListener interfaces.
  */
 public class Controller implements Initializable, PropertyChangeListener {
-    // TODO: Complete MenuBar Close item and About item
-
-    private static final Logger LOGGER =
-            Logger.getLogger(Controller.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
     /**
      * The main content area where users can view and edit the text of the current note page.
@@ -81,6 +83,16 @@ public class Controller implements Initializable, PropertyChangeListener {
      */
     @FXML private MenuItem menuLoad;
 
+    /**
+     * Menu item under File -> Close. Saves and exits the application.
+     */
+    @FXML private MenuItem menuClose;
+
+    /**
+     * Menu item under Help -> About. Shows application information dialogue.
+     */
+    @FXML private MenuItem menuAbout;
+
     /** The main facade that provides access to all notebook model operations.  */
     private final NoteFacade facade = new NoteFacade();
 
@@ -126,6 +138,24 @@ public class Controller implements Initializable, PropertyChangeListener {
         loadPageContent();
         setupButtons();
         setupMenuActions();
+
+        // Autoload existing notebook on startup
+        if (new File("notebook.dat").exists()) {
+            try {
+                facade.loadNotebook("notebook.dat");
+                currentPage = facade.getCurrentPage();
+                loadPageContent();
+                LOGGER.info("Auto-loaded existing notebook from notebook.dat");
+            } catch (IOException | ClassNotFoundException e) {
+                LOGGER.log(Level.SEVERE, "Failed to auto-load notebook", e);
+            }
+        }
+
+        // Auto-save on window close (deferred until scene is attached)
+        Platform.runLater(() -> {
+            Stage stage = (Stage) contentArea.getScene().getWindow();
+            stage.setOnCloseRequest(_ -> handleSave());
+        });
     }
 
     /** Configures the action handlers for the add group and add page buttons.  */
@@ -145,6 +175,8 @@ public class Controller implements Initializable, PropertyChangeListener {
                 new KeyCodeCombination(KeyCode.L, KeyCombination.CONTROL_DOWN));
         menuSave.setOnAction(_ -> handleSave());
         menuLoad.setOnAction(_ -> handleLoad());
+        menuClose.setOnAction(_ -> handleClose());
+        menuAbout.setOnAction(_ -> handleAbout());
     }
 
     /**
@@ -286,5 +318,36 @@ public class Controller implements Initializable, PropertyChangeListener {
         } catch (IOException | ClassNotFoundException e) {
             LOGGER.log(Level.SEVERE, "Failed to load notebook", e);
         }
+    }
+
+    /** Saves the notebook and exits the application. */
+    private void handleClose() {
+        handleSave();
+        Stage stage = (Stage) contentArea.getScene().getWindow();
+        stage.close();
+    }
+
+    /** Shows an About dialogue with application information. */
+    private void handleAbout() {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle("About NotebookApplication");
+        alert.setHeaderText("NotebookApplication v1.0.0");
+        alert.setContentText("""
+                A OneNote-like notebook application built with JavaFX.
+
+                Features:
+                - Rich text editing (bold, italic, underline, fonts, colours)
+                - Note groups and pages (OneNote-style organisation)
+                - Advanced text grouping (bullet points, checkboxes)
+                - Save and load notebook state
+                - Auto-save on exit, auto-load on startup
+
+                Built with:
+                - JavaFX 24
+                - JDK 24
+                - HTMLEditor (WebKit-based rich text)
+                """);
+        alert.getDialogPane().setPrefWidth(420);
+        alert.showAndWait();
     }
 }
