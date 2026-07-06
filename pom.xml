@@ -75,7 +75,7 @@
           <execution>
             <id>default-cli</id>
             <configuration>
-              <mainClass>notebookapplication.notebookapplication.gui.HelloApplication</mainClass>
+              <mainClass>notebookapplication.gui.MainFrame</mainClass>
               <launcher>app</launcher>
               <jlinkZipName>app</jlinkZipName>
               <jlinkImageName>app</jlinkImageName>

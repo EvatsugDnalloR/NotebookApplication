@@ -70,6 +70,7 @@ build/
 # Others
 *.bkp
 *.dtmp
+.codewhale/
 
 # Notebook files
 notebook.dat

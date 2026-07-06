@@ -38,6 +38,7 @@ import notebookapplication.model.NotePage;
  */
 public class Controller implements Initializable, PropertyChangeListener {
     // TODO: Fix Rename Undo/Redo features
+    // TODO: Fix Undo/Redo menu items availability
 
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
