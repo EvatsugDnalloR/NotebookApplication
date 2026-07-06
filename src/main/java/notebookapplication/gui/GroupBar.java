@@ -146,8 +146,13 @@ public class GroupBar extends HBox implements PropertyChangeListener {
                 updateGroupName((NoteGroup) evt.getSource());
                 break;
 
+            case LOAD_NOTEBOOK:
+                // Clear all existing buttons and rebuild from loaded state
+                getChildren().clear();
+                initializeGroups();
+                break;
+
             default:
-                //throw new IllegalArgumentException("Unknown property: " + event);
                 break;
         }
     }

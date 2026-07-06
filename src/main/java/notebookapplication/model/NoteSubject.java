@@ -1,13 +1,22 @@
 package notebookapplication.model;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 /**
  * Abstract base class providing property change support for model classes.
  * Implements the Observer pattern for UI synchronisation.
+ *
+ * <p>Implements {@link Serializable} so that subclasses ({@code NoteGroup},
+ * {@code NotePage}) can be serialized and deserialized with their
+ * {@code PropertyChangeSupport} intact.
  */
-public abstract class NoteSubject {
+public abstract class NoteSubject implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     /** Support for managing property change listeners. */
     protected PropertyChangeSupport support;
 

@@ -202,8 +202,15 @@ public class PageBar extends VBox implements PropertyChangeListener {
                 updatePageName((NotePage) evt.getSource());
                 break;
 
+            case LOAD_NOTEBOOK:
+                // Clear all existing buttons and rebuild from loaded state
+                cleanupCurrentGroup();
+                currentGroup = facade.getCurrentGroup();
+                currentGroup.addPropertyChangeListener(this);
+                initializePages();
+                break;
+
             default:
-                //throw new IllegalArgumentException("Unknown property: " + event);
                 break;
         }
     }

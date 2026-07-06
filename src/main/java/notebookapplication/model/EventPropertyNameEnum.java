@@ -17,7 +17,8 @@ public enum EventPropertyNameEnum {
     SWITCH_TO_PAGE("5"),
     SWITCH_TO_GROUP("6"),
     REMOVE_GROUP("7"),
-    REMOVE_PAGE("8");
+    REMOVE_PAGE("8"),
+    LOAD_NOTEBOOK("9");
 
     public final String propertyName;
 

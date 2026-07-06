@@ -70,3 +70,6 @@ build/
 # Others
 *.bkp
 *.dtmp
+
+# Notebook files
+notebook.dat

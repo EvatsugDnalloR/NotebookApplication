@@ -3,14 +3,18 @@ package notebookapplication.gui;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.MenuItem;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.HTMLEditor;
@@ -27,6 +31,8 @@ import notebookapplication.model.NotePage;
  * <p>Implements both Initializable and PropertyChangeListener interfaces.
  */
 public class Controller implements Initializable, PropertyChangeListener {
+    // TODO: Complete MenuBar Close item and About item
+
     private static final Logger LOGGER =
             Logger.getLogger(Controller.class.getName());
 
@@ -62,6 +68,18 @@ public class Controller implements Initializable, PropertyChangeListener {
      * positioned at the bottom of the page bar for intuitive access.
      */
     @FXML private Button addPageBtn;
+
+    /**
+     * Menu item under File -> Save. Triggers notebook serialization to disk.
+     * Keyboard accelerator: Ctrl+S.
+     */
+    @FXML private MenuItem menuSave;
+
+    /**
+     * Menu item under File -> Load. Triggers notebook deserialization from disk.
+     * Keyboard accelerator: Ctrl+L.
+     */
+    @FXML private MenuItem menuLoad;
 
     /** The main facade that provides access to all notebook model operations.  */
     private final NoteFacade facade = new NoteFacade();
@@ -107,12 +125,26 @@ public class Controller implements Initializable, PropertyChangeListener {
 
         loadPageContent();
         setupButtons();
+        setupMenuActions();
     }
 
     /** Configures the action handlers for the add group and add page buttons.  */
     private void setupButtons() {
         addGroupBtn.setOnAction(_ -> facade.createNewGroup());
         addPageBtn.setOnAction(_ -> facade.createNewPage(facade.getCurrentGroup()));
+    }
+
+    /**
+     * Configures menu item accelerators and action handlers for File → Save / Load.
+     * Sets Ctrl+S for save and Ctrl+L for load.
+     */
+    private void setupMenuActions() {
+        menuSave.setAccelerator(
+                new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN));
+        menuLoad.setAccelerator(
+                new KeyCodeCombination(KeyCode.L, KeyCombination.CONTROL_DOWN));
+        menuSave.setOnAction(_ -> handleSave());
+        menuLoad.setOnAction(_ -> handleLoad());
     }
 
     /**
@@ -232,17 +264,27 @@ public class Controller implements Initializable, PropertyChangeListener {
         return bodyContent;
     }
 
-    /**
-     * Saves all content and persists the complete notebook state to a file.
-     *
-     * <p>Can be called from menu actions or other UI components.
-     */
-    public void saveAllContent() {
+    /** Saves the current HTMLEditor content and persists the notebook to disk. */
+    private void handleSave() {
         saveCurrentContent();
         try {
             facade.saveNotebook("notebook.dat");
+            LOGGER.info("Notebook saved to notebook.dat");
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to save notebook state", e);
+            LOGGER.log(Level.SEVERE, "Failed to save notebook", e);
+        }
+    }
+
+    /** Loads the notebook from disk and rebuilds the UI to reflect loaded state. */
+    private void handleLoad() {
+        saveCurrentContent();
+        try {
+            facade.loadNotebook("notebook.dat");
+            currentPage = facade.getCurrentPage();
+            loadPageContent();
+            LOGGER.info("Notebook loaded from notebook.dat");
+        } catch (IOException | ClassNotFoundException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load notebook", e);
         }
     }
 }
