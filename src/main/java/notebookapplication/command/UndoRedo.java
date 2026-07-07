@@ -19,6 +19,7 @@ public class UndoRedo {
 
     private final Deque<Command> undoStack = new ArrayDeque<>();
     private final Deque<Command> redoStack = new ArrayDeque<>();
+    private Runnable onChanged = () -> {};
 
     /**
      * Executes a command, pushes it onto the undo stack, and clears the redo stack.
@@ -29,6 +30,7 @@ public class UndoRedo {
         command.execute();
         undoStack.push(command);
         redoStack.clear();
+        onChanged.run();
     }
 
     /**
@@ -42,6 +44,7 @@ public class UndoRedo {
             Command command = undoStack.pop();
             command.undo();
             redoStack.push(command);
+            onChanged.run();
         }
     }
 
@@ -56,6 +59,7 @@ public class UndoRedo {
             Command command = redoStack.pop();
             command.execute();
             undoStack.push(command);
+            onChanged.run();
         }
     }
 
@@ -75,5 +79,14 @@ public class UndoRedo {
      */
     public boolean canRedo() {
         return !redoStack.isEmpty();
+    }
+
+    /**
+     * Sets a callback invoked after every stack change (execute, undo, redo).
+     *
+     * @param onChanged the callback to run
+     */
+    public void setOnChanged(Runnable onChanged) {
+        this.onChanged = onChanged;
     }
 }

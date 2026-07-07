@@ -34,7 +34,8 @@ public class GroupBar extends HBox implements PropertyChangeListener {
      *
      * <p>Initialises the group buttons and sets up the toggle group behaviour.
      *
-     * @param facade the main application facade for accessing model functionality
+     * @param facade the main application facade for accessing
+     *               model functionality
      */
     public GroupBar(NoteFacade facade) {
         this.facade = facade;

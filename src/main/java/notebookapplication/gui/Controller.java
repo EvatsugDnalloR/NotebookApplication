@@ -37,8 +37,6 @@ import notebookapplication.model.NotePage;
  * <p>Implements both Initializable and PropertyChangeListener interfaces.
  */
 public class Controller implements Initializable, PropertyChangeListener {
-    // TODO: Fix Undo/Redo menu items availability
-
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
     /**
@@ -150,6 +148,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         // Register for content updates
         facade.addPropertyChangeListener(this);
         currentPage = facade.getCurrentPage();
+        undoRedo.setOnChanged(this::updateUndoRedoMenuState);
 
         loadPageContent();
         setupButtons();
@@ -201,6 +200,7 @@ public class Controller implements Initializable, PropertyChangeListener {
                         KeyCombination.SHIFT_DOWN));
         menuUndo.setOnAction(_ -> handleUndo());
         menuRedo.setOnAction(_ -> handleRedo());
+        updateUndoRedoMenuState();
     }
 
     /**
@@ -390,5 +390,11 @@ public class Controller implements Initializable, PropertyChangeListener {
         undoRedo.redo();
         currentPage = facade.getCurrentPage();
         loadPageContent();
+    }
+
+    /** Enables or disables the Undo/Redo menu items based on stack state. */
+    private void updateUndoRedoMenuState() {
+        menuUndo.setDisable(!undoRedo.canUndo());
+        menuRedo.setDisable(!undoRedo.canRedo());
     }
 }

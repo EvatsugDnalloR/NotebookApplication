@@ -54,7 +54,8 @@ public class PageBar extends VBox implements PropertyChangeListener {
      *
      * <p>Initialises the page buttons and sets up the toggle group behaviour.
      *
-     * @param facade the main application facade for accessing model functionality
+     * @param facade the main application facade for accessing
+     *               model functionality
      */
     public PageBar(NoteFacade facade) {
         this.facade = facade;
