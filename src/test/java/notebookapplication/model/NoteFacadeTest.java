@@ -187,6 +187,48 @@ class NoteFacadeTest {
     }
 
     // ---------------------------------------------------------------
+    //  renameGroup / renamePage
+    // ---------------------------------------------------------------
+
+    @Test
+    void renameGroup_UpdatesGroupName() {
+        NoteGroup group = facade.getCurrentGroup();
+        facade.renameGroup(group, "Work");
+        assertEquals("Work", group.getGroupName());
+    }
+
+    @Test
+    void renameGroup_IsUndoable() {
+        NoteGroup group = facade.getCurrentGroup();
+        String original = group.getGroupName();
+
+        facade.renameGroup(group, "Changed");
+        assertEquals("Changed", group.getGroupName());
+
+        undoRedo.undo();
+        assertEquals(original, group.getGroupName());
+    }
+
+    @Test
+    void renamePage_UpdatesPageName() {
+        NotePage page = facade.getCurrentPage();
+        facade.renamePage(page, "Meeting Notes");
+        assertEquals("Meeting Notes", page.getPageName());
+    }
+
+    @Test
+    void renamePage_IsUndoable() {
+        NotePage page = facade.getCurrentPage();
+        String original = page.getPageName();
+
+        facade.renamePage(page, "Draft");
+        assertEquals("Draft", page.getPageName());
+
+        undoRedo.undo();
+        assertEquals(original, page.getPageName());
+    }
+
+    // ---------------------------------------------------------------
     //  Undo / Redo
     // ---------------------------------------------------------------
 
