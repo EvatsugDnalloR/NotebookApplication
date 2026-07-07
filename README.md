@@ -18,8 +18,8 @@ A OneNote-like notebook application built with JavaFX 24.
 - [x] Auto-save on exit, autoload on startup, plus manual save/load with shortcuts Ctrl+S/Ctrl+L
 - [x] Undo / Redo for group and page operations (Command design pattern) with shortcuts Ctrl+Shift+Z/Ctrl+Shift+Y
 - [x] Unit tests for the model layer
-- [ ] Unit tests for the gui layer
-- [ ] Better "About" dialog content (author, repository link, licence)
+- [ ] Unit tests for the command layer
+- [ ] Better "About" dialogue content (author, repository link, licence)
 
 ### Roadmap
 
@@ -54,15 +54,15 @@ notebookapplication/
 
 ## Tech Stack
 
-| Component | Version |
-|---|---|
-| JavaFX (controls, fxml, web) | 24 |
-| JDK | 24 |
-| Maven | 3.x |
-| HTMLEditor | WebKit-based rich text |
-| RichTextFX | 0.11.5 (planned: replace HTMLEditor) |
-| JUnit Jupiter | 5.10.3 |
-| Checkstyle | Google Checks |
+| Component                    | Version                              |
+|------------------------------|--------------------------------------|
+| JavaFX (controls, fxml, web) | 24                                   |
+| JDK                          | 24                                   |
+| Maven                        | 3.x                                  |
+| HTMLEditor                   | WebKit-based rich text               |
+| RichTextFX                   | 0.11.5 (planned: replace HTMLEditor) |
+| JUnit Jupiter                | 5.10.3                               |
+| Checkstyle                   | Google Checks                        |
 
 ---
 
@@ -75,7 +75,7 @@ There are two ways to run NotebookApplication:
 Clone the repository and run with Maven:
 
 ```bash
-git clone https://github.com/evatsug/NotebookApplication.git
+git clone https://github.com/EvatsugDnalloR/NotebookApplication.git
 cd NotebookApplication
 mvn clean javafx:run
 ```
