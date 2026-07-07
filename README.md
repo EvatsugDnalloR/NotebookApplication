@@ -17,8 +17,7 @@ A OneNote-like notebook application built with JavaFX 24.
 - [x] Manual save and load to local `.dat` file (Java serialization)
 - [x] Auto-save on exit, autoload on startup, plus manual save/load with shortcuts Ctrl+S/Ctrl+L
 - [x] Undo / Redo for group and page operations (Command design pattern) with shortcuts Ctrl+Shift+Z/Ctrl+Shift+Y
-- [x] Unit tests for the model layer
-- [ ] Unit tests for the command layer
+- [x] Unit tests for the model and command layer
 - [ ] Better "About" dialogue content (author, repository link, licence)
 
 ### Roadmap
