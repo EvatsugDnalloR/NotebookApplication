@@ -4,6 +4,8 @@ import notebookapplication.command.AddGroupCommand;
 import notebookapplication.command.AddPageCommand;
 import notebookapplication.command.RemoveGroupCommand;
 import notebookapplication.command.RemovePageCommand;
+import notebookapplication.command.RenameGroupCommand;
+import notebookapplication.command.RenamePageCommand;
 import notebookapplication.command.UndoRedo;
 import java.beans.PropertyChangeSupport;
 import java.io.FileInputStream;
@@ -112,6 +114,26 @@ public class NoteFacade extends NoteSubject {
         if (group != null) {
             undoRedo.execute(new RemovePageCommand(this, page, group));
         }
+    }
+
+    /**
+     * Renames a group (routed through UndoRedo).
+     *
+     * @param group   the group to rename
+     * @param newName the new name for the group
+     */
+    public void renameGroup(NoteGroup group, String newName) {
+        undoRedo.execute(new RenameGroupCommand(group, newName));
+    }
+
+    /**
+     * Renames a page (routed through UndoRedo).
+     *
+     * @param page    the page to rename
+     * @param newName the new title for the page
+     */
+    public void renamePage(NotePage page, String newName) {
+        undoRedo.execute(new RenamePageCommand(page, newName));
     }
 
     // ---------------------------------------------------------------

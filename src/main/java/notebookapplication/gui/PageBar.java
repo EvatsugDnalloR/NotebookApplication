@@ -293,6 +293,6 @@ public class PageBar extends VBox implements PropertyChangeListener {
         dialog.setContentText("Title:");
 
         Optional<String> result = dialog.showAndWait();
-        result.ifPresent(page::setPageName);
+        result.ifPresent(name -> facade.renamePage(page, name));
     }
 }

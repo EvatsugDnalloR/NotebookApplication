@@ -233,6 +233,6 @@ public class GroupBar extends HBox implements PropertyChangeListener {
         dialog.setContentText("Name:");
 
         Optional<String> result = dialog.showAndWait();
-        result.ifPresent(group::setGroupName);
+        result.ifPresent(name -> facade.renameGroup(group, name));
     }
 }
