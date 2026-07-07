@@ -36,4 +36,8 @@ public class TestPropertyChangeListener implements PropertyChangeListener {
         return events.stream()
                 .anyMatch(e -> eventType.equals(e.getPropertyName()));
     }
+
+    public List<PropertyChangeEvent> getEvents() {
+        return new ArrayList<>(events);
+    }
 }
