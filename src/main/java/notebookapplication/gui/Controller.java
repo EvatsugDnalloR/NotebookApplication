@@ -15,6 +15,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -353,25 +355,44 @@ public class Controller implements Initializable, PropertyChangeListener {
 
     /** Shows an About dialogue with application information. */
     private void handleAbout() {
-        // TODO: better About info including author name, GitHub repo link, license info etc.
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v1.0.0");
-        alert.setContentText("""
-                A OneNote-like notebook application built with JavaFX.
+        alert.setHeaderText("NotebookApplication v1.1.1");
 
-                Features:
-                - Rich text editing (bold, italic, underline, fonts, colours)
-                - Note groups and pages (OneNote-style organisation)
-                - Advanced text grouping (bullet points, checkboxes)
-                - Save and load notebook state
-                - Auto-save on exit, auto-load on startup
+        Label content = new Label("""
+                A OneNote-like notebook application built with JavaFX 24.
 
-                Built with:
-                - JavaFX 24
-                - JDK 24
-                - HTMLEditor (WebKit-based rich text)
+                Features
+                Rich text editing, note groups and pages,
+                bullet points and checkboxes, undo/redo
+                for group and page operations, manual and
+                auto save/load.
+
+                Author     EvatsugDnalloR
+                License    MIT License
+
+                Built with
+                JavaFX 24 · JDK 24 · Maven
+                HTMLEditor (WebKit)
+                
+                Repository
                 """);
+
+        Hyperlink repoLink = new Hyperlink(
+                "github.com/EvatsugDnalloR/NotebookApplication");
+        repoLink.setOnAction(_ -> {
+            try {
+                java.awt.Desktop.getDesktop().browse(
+                        new java.net.URI(
+                          "https://github.com/EvatsugDnalloR/"
+                          + "NotebookApplication"));
+            } catch (Exception ignored) {
+                // Browser not available — silently ignore
+            }
+        });
+
+        alert.getDialogPane().setContent(
+                new VBox(content, repoLink));
         alert.getDialogPane().setPrefWidth(420);
         alert.showAndWait();
     }
