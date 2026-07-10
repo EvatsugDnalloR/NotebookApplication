@@ -94,6 +94,12 @@ public class Controller implements Initializable, PropertyChangeListener {
     @FXML private MenuItem menuExport;
 
     /**
+     * Menu item under File → Import. Imports notebook data from a
+     * user-chosen file.
+     */
+    @FXML private MenuItem menuImport;
+
+    /**
      * Menu item under File -> Close. Saves and exits the application.
      */
     @FXML private MenuItem menuClose;
@@ -204,7 +210,11 @@ public class Controller implements Initializable, PropertyChangeListener {
                 new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN,
                         KeyCombination.SHIFT_DOWN)
         );
+        menuImport.setAccelerator(
+                new KeyCodeCombination(KeyCode.L, KeyCombination.CONTROL_DOWN,
+                        KeyCombination.SHIFT_DOWN));
         menuExport.setOnAction(_ -> handleExport());
+        menuImport.setOnAction(_ -> handleImport());
 
         menuClose.setOnAction(_ -> handleClose());
         menuAbout.setOnAction(_ -> handleAbout());
@@ -380,6 +390,30 @@ public class Controller implements Initializable, PropertyChangeListener {
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE,
                         "Failed to export notebook", e);
+            }
+        }
+    }
+
+    /** Imports a notebook from a user-chosen file. */
+    private void handleImport() {
+        saveCurrentContent();
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Import Notebook");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter(
+                        "Notebook Data (*.dat)", "*.dat"));
+        File file = chooser.showOpenDialog(
+                contentArea.getScene().getWindow());
+        if (file != null) {
+            try {
+                facade.loadNotebook(file.getAbsolutePath());
+                currentPage = facade.getCurrentPage();
+                loadPageContent();
+                LOGGER.info("Notebook imported from "
+                        + file.getAbsolutePath());
+            } catch (IOException | ClassNotFoundException e) {
+                LOGGER.log(Level.SEVERE,
+                        "Failed to import notebook", e);
             }
         }
     }
