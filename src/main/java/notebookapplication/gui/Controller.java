@@ -18,6 +18,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.stage.FileChooser;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -85,6 +86,12 @@ public class Controller implements Initializable, PropertyChangeListener {
      * Keyboard accelerator: Ctrl+L.
      */
     @FXML private MenuItem menuLoad;
+
+    /**
+     * Menu item under File → Export. Exports notebook data to a
+     * user-chosen location.
+     */
+    @FXML private MenuItem menuExport;
 
     /**
      * Menu item under File -> Close. Saves and exits the application.
@@ -192,8 +199,16 @@ public class Controller implements Initializable, PropertyChangeListener {
                 new KeyCodeCombination(KeyCode.L, KeyCombination.CONTROL_DOWN));
         menuSave.setOnAction(_ -> handleSave());
         menuLoad.setOnAction(_ -> handleLoad());
+
+        menuExport.setAccelerator(
+                new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN,
+                        KeyCombination.SHIFT_DOWN)
+        );
+        menuExport.setOnAction(_ -> handleExport());
+
         menuClose.setOnAction(_ -> handleClose());
         menuAbout.setOnAction(_ -> handleAbout());
+
         menuUndo.setAccelerator(
                 new KeyCodeCombination(KeyCode.Z, KeyCombination.CONTROL_DOWN,
                         KeyCombination.SHIFT_DOWN));
@@ -343,6 +358,29 @@ public class Controller implements Initializable, PropertyChangeListener {
             LOGGER.info("Notebook loaded from notebook.dat");
         } catch (IOException | ClassNotFoundException e) {
             LOGGER.log(Level.SEVERE, "Failed to load notebook", e);
+        }
+    }
+
+    /** Exports the notebook to a user-chosen location via a file dialog. */
+    private void handleExport() {
+        saveCurrentContent();
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export Notebook");
+        chooser.setInitialFileName("notebook.dat");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter(
+                        "Notebook Data (*.dat)", "*.dat"));
+        File file = chooser.showSaveDialog(
+                contentArea.getScene().getWindow());
+        if (file != null) {
+            try {
+                facade.saveNotebook(file.getAbsolutePath());
+                LOGGER.info("Notebook exported to "
+                        + file.getAbsolutePath());
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE,
+                        "Failed to export notebook", e);
+            }
         }
     }
 

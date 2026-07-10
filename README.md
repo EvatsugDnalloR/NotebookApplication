@@ -22,7 +22,7 @@ A OneNote-like notebook application built with JavaFX 24.
 
 ### Roadmap
 
-- [ ] Import / Export to other file formats
+- [ ] Import / Export notebook data from / to other directories
 - [ ] Text-level undo/redo — migrate from `HTMLEditor` to `RichTextFX`
 - [ ] Better UI design (e.g. Material UI styling)
 

@@ -18,6 +18,8 @@
                     <items>
                         <MenuItem fx:id="menuSave" mnemonicParsing="false" text="Save" />
                   <MenuItem fx:id="menuLoad" mnemonicParsing="false" text="Load" />
+                  <MenuItem fx:id="menuExport" mnemonicParsing="false" text="Export" />
+                  <MenuItem fx:id="menuImport" mnemonicParsing="false" text="Import" />
                   <MenuItem fx:id="menuClose" mnemonicParsing="false" text="Close" />
                     </items>
                 </Menu>
