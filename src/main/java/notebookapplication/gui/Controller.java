@@ -429,7 +429,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void handleAbout() {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v1.1.1");
+        alert.setHeaderText("NotebookApplication v1.2.1");
 
         Label content = new Label("""
                 A OneNote-like notebook application built with JavaFX 24.
