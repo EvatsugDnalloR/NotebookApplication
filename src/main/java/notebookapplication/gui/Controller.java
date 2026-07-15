@@ -18,6 +18,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Tooltip;
 import javafx.stage.FileChooser;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -75,6 +76,16 @@ public class Controller implements Initializable, PropertyChangeListener {
      * positioned at the bottom of the page bar for intuitive access.
      */
     @FXML private Button addPageBtn;
+
+    /**
+     * Toolbar button for text-level undo. Calls the RichTextFX UndoManager.
+     */
+    @FXML private Button textUndo;
+
+    /**
+     * Toolbar button for text-level redo. Calls the RichTextFX UndoManager.
+     */
+    @FXML private Button textRedo;
 
     /**
      * Menu item under File -> Save. Triggers notebook serialization to disk.
@@ -169,6 +180,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         loadPageContent();
         setupButtons();
         setupMenuActions();
+        setupTextUndoRedo();
 
         // Autoload existing notebook on startup
         if (new File("notebook.dat").exists()) {
@@ -213,7 +225,8 @@ public class Controller implements Initializable, PropertyChangeListener {
         );
         menuImport.setAccelerator(
                 new KeyCodeCombination(KeyCode.L, KeyCombination.CONTROL_DOWN,
-                        KeyCombination.SHIFT_DOWN));
+                        KeyCombination.SHIFT_DOWN)
+        );
         menuExport.setOnAction(_ -> handleExport());
         menuImport.setOnAction(_ -> handleImport());
 
@@ -221,11 +234,9 @@ public class Controller implements Initializable, PropertyChangeListener {
         menuAbout.setOnAction(_ -> handleAbout());
 
         menuUndo.setAccelerator(
-                new KeyCodeCombination(KeyCode.Z, KeyCombination.CONTROL_DOWN,
-                        KeyCombination.SHIFT_DOWN));
+                new KeyCodeCombination(KeyCode.Z, KeyCombination.ALT_DOWN));
         menuRedo.setAccelerator(
-                new KeyCodeCombination(KeyCode.Y, KeyCombination.CONTROL_DOWN,
-                        KeyCombination.SHIFT_DOWN));
+                new KeyCodeCombination(KeyCode.Y, KeyCombination.ALT_DOWN));
         menuUndo.setOnAction(_ -> handleUndo());
         menuRedo.setOnAction(_ -> handleRedo());
         updateUndoRedoMenuState();
@@ -428,5 +439,31 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void updateUndoRedoMenuState() {
         menuUndo.setDisable(!undoRedo.canUndo());
         menuRedo.setDisable(!undoRedo.canRedo());
+    }
+
+    /** Wires toolbar undo/redo buttons with tooltips, actions, and state. */
+    @SuppressWarnings("unchecked")
+    private void setupTextUndoRedo() {
+        textUndo.setTooltip(new Tooltip("Undo (Ctrl+Z)"));
+        textRedo.setTooltip(new Tooltip("Redo (Ctrl+Y)"));
+
+        textUndo.setOnAction(_ ->
+                contentArea.getUndoManager().undo());
+        textRedo.setOnAction(_ ->
+                contentArea.getUndoManager().redo());
+
+        // Bind button disabled state to undo manager availability
+        contentArea.getUndoManager().undoAvailableProperty()
+                .addListener((_, _, available) ->
+                        textUndo.setDisable(!(boolean) available));
+        contentArea.getUndoManager().redoAvailableProperty()
+                .addListener((_, _, available) ->
+                        textRedo.setDisable(!(boolean) available));
+
+        // Set initial state
+        textUndo.setDisable(
+                !contentArea.getUndoManager().isUndoAvailable());
+        textRedo.setDisable(
+                !contentArea.getUndoManager().isRedoAvailable());
     }
 }
