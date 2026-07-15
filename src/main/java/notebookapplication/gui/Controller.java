@@ -24,8 +24,8 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.web.HTMLEditor;
 import javafx.stage.Stage;
+import org.fxmisc.richtext.InlineCssTextArea;
 import notebookapplication.command.UndoRedo;
 import notebookapplication.model.EventPropertyNameEnum;
 import notebookapplication.model.NoteFacade;
@@ -43,13 +43,14 @@ public class Controller implements Initializable, PropertyChangeListener {
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
     /**
-     * The main content area where users can view and edit the text of the current note page.
+     * The main content area where users can view and edit the text of the
+     * current note page.
      *
-     * <p>Uses JavaFX's built-in {@code HTMLEditor} which provides a WYSIWYG rich-text editing
-     * experience with a built-in toolbar for bold, italic, underline, font family,
-     * font size, text colour, and other formatting options.
+     * <p>Uses RichTextFX's {@code InlineCssTextArea} which provides per-keystroke
+     * undo/redo, inline CSS styling, and a virtualised text flow for large
+     * documents.
      */
-    @FXML private HTMLEditor contentArea;
+    @FXML private InlineCssTextArea contentArea;
 
     /**
      * Container for the GroupBar component that displays note groups as horizontal tabs
@@ -263,91 +264,29 @@ public class Controller implements Initializable, PropertyChangeListener {
     }
 
     /**
-     * Saves the current content from the HTMLEditor to the active page model.
-     *
-     * <p>Extracts the body content from the HTMLEditor's full HTML document and
-     * stores it on the model via {@link NotePage#setHtmlBody(String)}.
-     * Called before switching pages to ensure content is persisted.
+     * Saves content from the editor to the active page model via HTML.
      */
     private void saveCurrentContent() {
         if (currentPage != null) {
-            String fullHtml = contentArea.getHtmlText();
-            String bodyContent = extractBodyContent(fullHtml);
-            currentPage.setHtmlBody(bodyContent);
+            String html = HtmlBridge.extractHtml(contentArea);
+            currentPage.setHtmlBody(html);
         }
     }
 
     /**
-     * Loads content from the active page model into the HTMLEditor.
-     *
-     * <p>Generates HTML from the page model via {@link NotePage#toHtml()},
-     * wraps it in a full HTML document, and sets it on the editor.
-     * Called after page switching or when content changes externally.
+     * Loads content from the active page model into the editor.
+     * Resets the undo history so the user can't undo into the
+     * previous page's state.
      */
     private void loadPageContent() {
         if (currentPage != null) {
-            String bodyHtml = currentPage.toHtml();
-            String fullDocument = wrapHtmlDocument(bodyHtml);
-            contentArea.setHtmlText(fullDocument);
+            String html = currentPage.toHtml();
+            HtmlBridge.populateArea(contentArea, html);
+            contentArea.getUndoManager().forgetHistory();
         }
     }
 
-    /**
-     * Wraps HTML body content in a complete HTML document suitable for
-     * {@link HTMLEditor#setHtmlText(String)}.
-     *
-     * <p>The {@code contenteditable="true"} attribute on the body tag is required
-     * by HTMLEditor; without it the editor becomes read-only.
-     *
-     * @param bodyContent the inner HTML to place inside the body tag
-     * @return a complete HTML document string
-     */
-    private String wrapHtmlDocument(String bodyContent) {
-        return "<html><head></head><body contenteditable=\"true\">"
-                + bodyContent
-                + "</body></html>";
-    }
-
-    /**
-     * Extracts the inner body content from an HTMLEditor-produced HTML document.
-     *
-     * <p>HTMLEditor's {@link HTMLEditor#getHtmlText()} returns a full HTML document:
-     * {@code <html><head>...</head><body contenteditable="true">...content...</body></html>}.
-     * This method strips the outer document structure and our own wrapper div
-     * to retrieve just the user-editable content.
-     *
-     * @param fullHtml the complete HTML document from HTMLEditor
-     * @return the inner body HTML content, with wrapper div removed if present
-     */
-    private String extractBodyContent(String fullHtml) {
-        // Locate the <body> tag
-        int bodyTagStart = fullHtml.indexOf("<body");
-        if (bodyTagStart == -1) {
-            // No body tag found — return content as-is (defensive fallback)
-            return fullHtml;
-        }
-
-        int bodyContentStart = fullHtml.indexOf(">", bodyTagStart) + 1;
-        int bodyEnd = fullHtml.indexOf("</body>", bodyContentStart);
-        if (bodyEnd == -1) {
-            // No closing body tag — return everything after <body...>
-            return fullHtml.substring(bodyContentStart);
-        }
-
-        String bodyContent = fullHtml.substring(bodyContentStart, bodyEnd).trim();
-
-        // Strip our own wrapper div if present (added by NotePage.toHtml())
-        final String wrapperStart = "<div class='note-content'>";
-        final String wrapperEnd = "</div>";
-        if (bodyContent.startsWith(wrapperStart) && bodyContent.endsWith(wrapperEnd)) {
-            bodyContent = bodyContent.substring(wrapperStart.length(),
-                    bodyContent.length() - wrapperEnd.length());
-        }
-
-        return bodyContent;
-    }
-
-    /** Saves the current HTMLEditor content and persists the notebook to disk. */
+    /** Saves the current editor content and persists the notebook to disk. */
     private void handleSave() {
         saveCurrentContent();
         try {
@@ -429,7 +368,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void handleAbout() {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v1.2.1");  // update when needed
+        alert.setHeaderText("NotebookApplication v2.2.1");  // update when needed
 
         Label content = new Label("""
                 A OneNote-like notebook application built with JavaFX 24.
@@ -445,7 +384,7 @@ public class Controller implements Initializable, PropertyChangeListener {
 
                 Built with
                 JavaFX 24 · JDK 24 · Maven
-                HTMLEditor (WebKit)
+                RichTextFX (InlineCssTextArea)
                 
                 Repository
                 """);

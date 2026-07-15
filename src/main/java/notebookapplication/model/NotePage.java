@@ -113,7 +113,7 @@ public class NotePage extends NoteSubject implements Serializable {
         if (htmlBodyContent != null && !htmlBodyContent.isEmpty()) {
             return "<div class='note-content'>" + htmlBodyContent + "</div>";
         }
-        return "<div class='note-content'><br></div>";
+        return "<div class='note-content'></div>";
     }
 
     /**
