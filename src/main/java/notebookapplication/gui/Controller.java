@@ -41,6 +41,8 @@ import notebookapplication.model.NotePage;
  * <p>Implements both Initializable and PropertyChangeListener interfaces.
  */
 public class Controller implements Initializable, PropertyChangeListener {
+    // TODO: fix undo bug for AddGroup Command
+
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
     /**
@@ -379,7 +381,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void handleAbout() {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v2.2.1");  // update when needed
+        alert.setHeaderText("NotebookApplication v2.0.0");  // update when needed
 
         Label content = new Label("""
                 A OneNote-like notebook application built with JavaFX 24.

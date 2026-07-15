@@ -11,9 +11,6 @@ A OneNote-like notebook application built with JavaFX 24.
 ### Done
 
 - [x] OneNote-style note groups and pages (add, remove, rename, navigate)
-- [x] Rich text editing (bold, italic, underline, fonts,
-  colours, sizes etc.) and advanced text grouping (bullet points, checkboxes, indentation)
-  via `HTMLEditor`
 - [x] Manual save and load to local `.dat` file (Java serialization)
 - [x] Auto-save on exit, autoload on startup, plus manual save/load with shortcuts Ctrl+S/Ctrl+L
 - [x] Undo / Redo for group and page operations (Command design pattern) with shortcuts Ctrl+Shift+Z/Ctrl+Shift+Y
@@ -23,7 +20,14 @@ A OneNote-like notebook application built with JavaFX 24.
 ### Roadmap
 
 - [x] Import / Export notebook data from / to other directories
-- [ ] Text-level undo/redo — migrate from `HTMLEditor` to `RichTextFX`
+- [x] Text-level undo/redo — migrate from `HTMLEditor` to `RichTextFX`
+- [ ] Wire text editing toolbar: bold, italic, underline, strikethrough
+- [ ] Wire font family and font size selectors
+- [ ] Wire text colour picker
+- [ ] Wire bullet points, numbered lists, and checkboxes
+- [ ] Wire text alignment (left, centre, right)
+- [ ] Wire cut / copy / paste toolbar buttons
+- [ ] Handle paragraph-level styling (indentation, spacing)
 - [ ] Better UI design (e.g. Material UI styling)
 
 ---
@@ -53,15 +57,14 @@ notebookapplication/
 
 ## Tech Stack
 
-| Component                    | Version                              |
-|------------------------------|--------------------------------------|
-| JavaFX (controls, fxml, web) | 24                                   |
-| JDK                          | 24                                   |
-| Maven                        | 3.x                                  |
-| HTMLEditor                   | WebKit-based rich text               |
-| RichTextFX                   | 0.11.5 (planned: replace HTMLEditor) |
-| JUnit Jupiter                | 5.10.3                               |
-| Checkstyle                   | Google Checks                        |
+| Component                    | Version                            |
+|------------------------------|------------------------------------|
+| JavaFX (controls, fxml, web) | 24                                 |
+| JDK                          | 24                                 |
+| Maven                        | 3.x                                |
+| RichTextFX                   | 0.11.5                             |
+| JUnit Jupiter                | 5.10.3                             |
+| Checkstyle                   | Google Checks                      |
 
 ---
 
