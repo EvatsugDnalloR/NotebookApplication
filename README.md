@@ -2,7 +2,7 @@
 
 A OneNote-like notebook application built with JavaFX 24.
 
-![Snapshots](images/snapshot_1.png)
+![Snapshots](images/snapshot_2.png)
 
 ---
 
@@ -70,33 +70,17 @@ notebookapplication/
 
 ## Getting Started
 
-There are two ways to run NotebookApplication:
-
-### Option 1: Build from source
-
-Clone the repository and run with Maven:
+Clone or download the source code from the
+[latest release](https://github.com/EvatsugDnalloR/NotebookApplication/releases/latest),
+then build and run with Maven:
 
 ```bash
-git clone https://github.com/EvatsugDnalloR/NotebookApplication.git
-cd NotebookApplication
+git clone https://github.com/EvatsugDnalloR/NotebookApplication.git   # if not downloading from release page
+cd NotebookApplication   # open the directory
 mvn clean javafx:run
 ```
 
 Prerequisites: JDK 24 and Maven 3.x.
-
-### Option 2: Portable version (no install required)
-
-Download `NotebookApplication-v1.0.0-portable.zip` from the
-[latest release](https://github.com/evatsug/NotebookApplication/releases/latest),
-unzip it anywhere, and add its `bin` directory to your system `PATH`.
-Then run:
-
-```bash
-app
-```
-
-The portable bundle includes a stripped JDK 24 runtime — no
-separate Java installation is needed.
 
 ---
 ## High-Level Design
