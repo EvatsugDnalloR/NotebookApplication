@@ -1,12 +1,5 @@
 package notebookapplication.model;
 
-import notebookapplication.command.AddGroupCommand;
-import notebookapplication.command.AddPageCommand;
-import notebookapplication.command.RemoveGroupCommand;
-import notebookapplication.command.RemovePageCommand;
-import notebookapplication.command.RenameGroupCommand;
-import notebookapplication.command.RenamePageCommand;
-import notebookapplication.command.UndoRedo;
 import java.beans.PropertyChangeSupport;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -17,6 +10,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import notebookapplication.command.AddGroupCommand;
+import notebookapplication.command.AddPageCommand;
+import notebookapplication.command.RemoveGroupCommand;
+import notebookapplication.command.RemovePageCommand;
+import notebookapplication.command.RenameGroupCommand;
+import notebookapplication.command.RenamePageCommand;
+import notebookapplication.command.UndoRedo;
 
 
 /**
