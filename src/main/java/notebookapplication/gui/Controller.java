@@ -41,8 +41,6 @@ import notebookapplication.model.NotePage;
  * <p>Implements both Initializable and PropertyChangeListener interfaces.
  */
 public class Controller implements Initializable, PropertyChangeListener {
-    // TODO: fix undo order issue for AddGroup Command
-
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
     /**

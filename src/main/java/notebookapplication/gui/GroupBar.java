@@ -16,14 +16,16 @@ import notebookapplication.model.NoteGroup;
 
 
 /**
- * A horizontal bar (HBox) component that displays and manages note groups as toggle buttons.
+ * A horizontal bar (HBox) component that displays and manages note
+ * groups as toggle buttons.
  *
- * <p>Provides functionality for adding, removing, renaming groups, and switching between them.
+ * <p>Provides functionality for adding, removing, renaming, moving
+ * groups, and switching between them.
  *
  * <p>Implements PropertyChangeListener to respond to model changes.
  */
 public class GroupBar extends HBox implements PropertyChangeListener {
-    /** ToggleGroup that manages switching between NoteGroups (toggle buttons).  */
+    /** ToggleGroup that manages switching between NoteGroups. */
     private final ToggleGroup toggleGroup = new ToggleGroup();
 
     /** The access point to the backend model of the notebook application.  */
@@ -32,10 +34,7 @@ public class GroupBar extends HBox implements PropertyChangeListener {
     /**
      * Constructs a GroupBar with a reference to the application facade.
      *
-     * <p>Initialises the group buttons and sets up the toggle group behaviour.
-     *
-     * @param facade the main application facade for accessing
-     *               model functionality
+     * @param facade the main application facade
      */
     public GroupBar(NoteFacade facade) {
         this.facade = facade;
@@ -44,12 +43,6 @@ public class GroupBar extends HBox implements PropertyChangeListener {
         setupToggleGroup();
     }
 
-    /**
-     * Initialises the group buttons by creating a toggle button for each existing group.
-     *
-     * <p>Called during construction to set up the initial state.
-     */
-
     private void initializeGroups() {
         for (NoteGroup group : facade.getGroups()) {
             addGroupButton(group);
@@ -57,19 +50,11 @@ public class GroupBar extends HBox implements PropertyChangeListener {
         selectCurrentGroup();
     }
 
-    /**
-     * Creates and adds a toggle button for a specific group to the UI.
-     *
-     * <p>Sets up the button's properties, context menu, and click behaviour.
-     *
-     * @param group the NoteGroup to create a button for
-     */
     private void addGroupButton(NoteGroup group) {
         ToggleButton button = new ToggleButton(group.getGroupName());
         button.setUserData(group);
         button.setToggleGroup(toggleGroup);
 
-        // Add context menu
         button.setContextMenu(createGroupContextMenu(group));
 
         button.setOnAction(_ -> {
@@ -83,11 +68,6 @@ public class GroupBar extends HBox implements PropertyChangeListener {
         group.addPropertyChangeListener(this);
     }
 
-    /**
-     * Selects the toggle button corresponding to the currently active group.
-     *
-     * <p>Ensures the UI reflects the current model state.
-     */
     private void selectCurrentGroup() {
         for (var node : getChildren()) {
             if (node instanceof ToggleButton button) {
@@ -99,13 +79,6 @@ public class GroupBar extends HBox implements PropertyChangeListener {
         }
     }
 
-    /**
-     * Configures the toggle group to prevent deselection of all buttons.
-     *
-     * <p>Ensures at least one group is always selected.
-     *
-     * @post there is at least one group left in the ToggleGroup
-     */
     private void setupToggleGroup() {
         toggleGroup.selectedToggleProperty().addListener(
                 (_, oldToggle, newToggle) -> {
@@ -116,18 +89,12 @@ public class GroupBar extends HBox implements PropertyChangeListener {
         );
     }
 
-    /**
-     * Handles property change events from the model.
-     *
-     * <p>Responds to group addition, removal, renaming, and selection changes.
-     *
-     * @param evt the property change event containing information about the change
-     */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         EventPropertyNameEnum event = EventPropertyNameEnum.fromPropertyName(evt.getPropertyName());
         if (event == null) {
-            throw new IllegalArgumentException("Unknown property: " + evt.getPropertyName());
+            throw new IllegalArgumentException(
+                    "Unknown property: " + evt.getPropertyName());
         }
 
         switch (event) {
@@ -147,8 +114,11 @@ public class GroupBar extends HBox implements PropertyChangeListener {
                 updateGroupName((NoteGroup) evt.getSource());
                 break;
 
+            case MOVE_GROUP:
+                refreshGroupOrder();
+                break;
+
             case LOAD_NOTEBOOK:
-                // Clear all existing buttons and rebuild from loaded state
                 getChildren().clear();
                 initializeGroups();
                 break;
@@ -159,13 +129,20 @@ public class GroupBar extends HBox implements PropertyChangeListener {
     }
 
     /**
-     * Removes the button for a specific group and cleans up its event listener.
-     *
-     * <p>Ensures at least one group remains by creating a new one if needed.
-     *
-     * @param group the group to remove from the UI
-     * @post {@code getChildren().isEmpty() == False}
+     * Rebuilds the toggle buttons to reflect the current group order.
      */
+    private void refreshGroupOrder() {
+        // Remove listeners before clearing to prevent memory leaks
+        for (var node : getChildren()) {
+            if (node instanceof ToggleButton button
+                    && button.getUserData() instanceof NoteGroup g) {
+                g.removePropertyChangeListener(this);
+            }
+        }
+        getChildren().clear();
+        initializeGroups();
+    }
+
     private void removeGroupButton(NoteGroup group) {
         group.removePropertyChangeListener(this);
 
@@ -176,64 +153,57 @@ public class GroupBar extends HBox implements PropertyChangeListener {
             return false;
         });
 
-        // Ensure at least one group remains
         if (getChildren().isEmpty()) {
             facade.createNewGroup();
         }
     }
 
-    /**
-     * Updates the button text when a group is renamed.
-     *
-     * @param group the group that was renamed
-     */
     private void updateGroupName(NoteGroup group) {
         for (var node : getChildren()) {
-            // check if the param NoteGroup actually exists in the GroupBar
-            if (node instanceof ToggleButton button && button.getUserData() == group) {
+            if (node instanceof ToggleButton button
+                    && button.getUserData() == group) {
                 button.setText(group.getGroupName());
                 break;
             }
         }
     }
 
-    /**
-     * Creates a context menu with options to rename or delete a group.
-     *
-     * <p>The delete option is dynamically disabled for the last remaining group.
-     *
-     * @param group the group this context menu applies to
-     * @return a configured ContextMenu instance
-     */
     private ContextMenu createGroupContextMenu(NoteGroup group) {
         ContextMenu menu = new ContextMenu();
 
-        // Rename option
         MenuItem renameItem = new MenuItem("Rename");
         renameItem.setOnAction(_ -> renameGroup(group));
 
-        // Delete option
+        MenuItem moveLeftItem = new MenuItem("Move Left");
+        moveLeftItem.setOnAction(_ -> facade.moveGroup(group, -1));
+
+        MenuItem moveRightItem = new MenuItem("Move Right");
+        moveRightItem.setOnAction(_ -> facade.moveGroup(group, 1));
+
         MenuItem deleteItem = new MenuItem("Delete");
         deleteItem.setOnAction(_ -> facade.removeGroup(group));
-        menu.setOnShowing(_ -> {    // update disable state dynamically
+
+        menu.setOnShowing(_ -> {
+            int idx = facade.getGroups().indexOf(group);
+            moveLeftItem.setDisable(idx <= 0);
+            moveRightItem.setDisable(idx < 0 || idx >= facade.getGroups().size() - 1);
             deleteItem.setDisable(facade.getGroups().size() <= 1);
         });
-        menu.getItems().addAll(renameItem, deleteItem);
+
+        menu.getItems().addAll(renameItem, moveLeftItem, moveRightItem,
+                deleteItem);
         return menu;
     }
 
-    /**
-     * Shows a dialog to rename a group and updates the model with the new name.
-     *
-     * @param group the group to rename
-     */
     private void renameGroup(NoteGroup group) {
-        TextInputDialog dialog = new TextInputDialog(group.getGroupName());
+        TextInputDialog dialog =
+                new TextInputDialog(group.getGroupName());
         dialog.setTitle("Rename Group");
         dialog.setHeaderText("Enter new group name:");
         dialog.setContentText("Name:");
 
         Optional<String> result = dialog.showAndWait();
-        result.ifPresent(name -> facade.renameGroup(group, name));
+        result.ifPresent(
+                name -> facade.renameGroup(group, name));
     }
 }

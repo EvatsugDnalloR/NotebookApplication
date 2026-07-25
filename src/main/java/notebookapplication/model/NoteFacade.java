@@ -16,6 +16,8 @@ import notebookapplication.command.AddPageCommand;
 import notebookapplication.command.RemoveGroupCommand;
 import notebookapplication.command.RemovePageCommand;
 import notebookapplication.command.RenameGroupCommand;
+import notebookapplication.command.MoveGroupCommand;
+import notebookapplication.command.MovePageCommand;
 import notebookapplication.command.RenamePageCommand;
 import notebookapplication.command.UndoRedo;
 
@@ -137,6 +139,26 @@ public class NoteFacade extends NoteSubject {
         undoRedo.execute(new RenamePageCommand(page, newName));
     }
 
+    /**
+     * Moves a group left or right (routed through UndoRedo).
+     *
+     * @param group     the group to move
+     * @param direction -1 to move left, +1 to move right
+     */
+    public void moveGroup(NoteGroup group, int direction) {
+        undoRedo.execute(new MoveGroupCommand(this, group, direction));
+    }
+
+    /**
+     * Moves a page up or down (routed through UndoRedo).
+     *
+     * @param page      the page to move
+     * @param direction -1 to move up, +1 to move down
+     */
+    public void movePage(NotePage page, int direction) {
+        undoRedo.execute(new MovePageCommand(this, page, direction));
+    }
+
     // ---------------------------------------------------------------
     //  Direct implementations — called by Command subclasses
     //  (bypass UndoRedo to avoid infinite recursion)
@@ -218,6 +240,33 @@ public class NoteFacade extends NoteSubject {
         support.firePropertyChange(
                 EventPropertyNameEnum.ADD_GROUP.getPropertyName(), null,
                 group);
+    }
+
+    /**
+     * Direct implementation of group movement.
+     * Swaps the group with its neighbour.
+     */
+    public void executeMoveGroup(NoteGroup group, int direction) {
+        var idx = groups.indexOf(group);
+        if (idx < 0) return;
+        int newIdx = idx + direction;
+        if (newIdx < 0 || newIdx >= groups.size()) return;
+        groups.remove(idx);
+        groups.add(newIdx, group);
+        support.firePropertyChange(
+                EventPropertyNameEnum.MOVE_GROUP.getPropertyName(),
+                idx, newIdx);
+    }
+
+    /**
+     * Direct implementation of page movement.
+     * Delegates to {@link NoteGroup#swapPageOrder}.
+     */
+    public void executeMovePage(NotePage page, int direction) {
+        NoteGroup group = findGroupContaining(page);
+        if (group != null) {
+            group.swapPageOrder(page, direction);
+        }
     }
 
     // ---------------------------------------------------------------
