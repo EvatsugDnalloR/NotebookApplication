@@ -21,12 +21,12 @@ A OneNote-like notebook application built with JavaFX 24.
 
 - [x] Import / Export notebook data from / to other directories
 - [x] Text-level undo/redo — migrate from `HTMLEditor` to `RichTextFX`
-- [ ] Wire text editing toolbar: bold, italic, underline, strikethrough
+- [ ] Wire text editing toolbar: bold, italic, underline
+- [x] Wire cut / copy / paste toolbar buttons
 - [ ] Wire font family and font size selectors
 - [ ] Wire text colour picker
 - [ ] Wire bullet points, numbered lists, and checkboxes
 - [ ] Wire text alignment (left, centre, right)
-- [ ] Wire cut / copy / paste toolbar buttons
 - [ ] Handle paragraph-level styling (indentation, spacing)
 - [ ] Better UI design (e.g. Material UI styling)
 

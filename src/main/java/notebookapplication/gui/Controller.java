@@ -19,12 +19,13 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tooltip;
-import javafx.stage.FileChooser;
+import javafx.scene.input.Clipboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.fxmisc.richtext.InlineCssTextArea;
 import notebookapplication.command.UndoRedo;
@@ -86,6 +87,15 @@ public class Controller implements Initializable, PropertyChangeListener {
      * Toolbar button for text-level redo. Calls the RichTextFX UndoManager.
      */
     @FXML private Button textRedo;
+
+    /** Toolbar cut button. */
+    @FXML private Button cut;
+
+    /** Toolbar copy button. */
+    @FXML private Button copy;
+
+    /** Toolbar paste button. */
+    @FXML private Button paste;
 
     /**
      * Menu item under File -> Save. Triggers notebook serialization to disk.
@@ -181,6 +191,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         setupButtons();
         setupMenuActions();
         setupTextUndoRedo();
+        setupCutCopyPaste();
 
         // Autoload existing notebook on startup
         if (new File("notebook.dat").exists()) {
@@ -379,7 +390,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void handleAbout() {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v2.1.1");  // update when needed
+        alert.setHeaderText("NotebookApplication v2.2.1");  // update when needed
 
         Label content = new Label("""
                 A OneNote-like notebook application built with JavaFX 24.
@@ -406,8 +417,7 @@ public class Controller implements Initializable, PropertyChangeListener {
             try {
                 java.awt.Desktop.getDesktop().browse(
                         new java.net.URI(
-                          "https://github.com/EvatsugDnalloR/"
-                          + "NotebookApplication"));
+                          "https://github.com/EvatsugDnalloR/NotebookApplication"));
             } catch (Exception ignored) {
                 // Browser not available — silently ignore
             }
@@ -441,6 +451,30 @@ public class Controller implements Initializable, PropertyChangeListener {
         menuRedo.setDisable(!undoRedo.canRedo());
     }
 
+    /** Wires toolbar cut/copy/paste buttons with tooltips and state. */
+    private void setupCutCopyPaste() {
+        cut.setTooltip(new Tooltip("Cut (Ctrl+X)"));
+        copy.setTooltip(new Tooltip("Copy (Ctrl+C)"));
+        paste.setTooltip(new Tooltip("Paste (Ctrl+V)"));
+
+        cut.setOnAction(_ -> contentArea.cut());
+        copy.setOnAction(_ -> contentArea.copy());
+        paste.setOnAction(_ -> contentArea.paste());
+
+        // Paste availability: check clipboard when editor gains focus
+        updatePasteState();
+        contentArea.focusedProperty().addListener((_, _, focused) -> {
+            if (focused) {
+                updatePasteState();
+            }
+        });
+    }
+
+    /** Updates paste button availability based on clipboard content. */
+    private void updatePasteState() {
+        paste.setDisable(!Clipboard.getSystemClipboard().hasString());
+    }
+
     /** Wires toolbar undo/redo buttons with tooltips, actions, and state. */
     @SuppressWarnings("unchecked")
     private void setupTextUndoRedo() {
@@ -461,9 +495,7 @@ public class Controller implements Initializable, PropertyChangeListener {
                         textRedo.setDisable(!(boolean) available));
 
         // Set initial state
-        textUndo.setDisable(
-                !contentArea.getUndoManager().isUndoAvailable());
-        textRedo.setDisable(
-                !contentArea.getUndoManager().isRedoAvailable());
+        textUndo.setDisable(!contentArea.getUndoManager().isUndoAvailable());
+        textRedo.setDisable(!contentArea.getUndoManager().isRedoAvailable());
     }
 }
