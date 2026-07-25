@@ -6,6 +6,7 @@ module notebookapplication {
     requires org.fxmisc.richtext;
     requires org.fxmisc.undo;
     requires reactfx;
+    requires javafx.web;
 
     exports notebookapplication.gui;
     exports notebookapplication.model;

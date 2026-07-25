@@ -12,17 +12,9 @@ import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
+import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
-import javafx.scene.control.Hyperlink;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.Tooltip;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
+import javafx.scene.input.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -97,6 +89,15 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** Toolbar paste button. */
     @FXML private Button paste;
 
+    /** Toolbar bold toggle button. */
+    @FXML private ToggleButton bold;
+
+    /** Toolbar italic toggle button. */
+    @FXML private ToggleButton italic;
+
+    /** Toolbar underline toggle button. */
+    @FXML private ToggleButton underline;
+
     /**
      * Menu item under File -> Save. Triggers notebook serialization to disk.
      * Keyboard accelerator: Ctrl+S.
@@ -168,6 +169,13 @@ public class Controller implements Initializable, PropertyChangeListener {
     private NotePage currentPage;
 
     /**
+     * When non-null, the next text insertion will be styled with this CSS.
+     * Set when the user toggles bold with no selection (i.e. wants the next typed characters to be bold/unbold).
+     * Cleared after one insertion or when the caret moves to a different position.
+     */
+    private String pendingStyle;
+
+    /**
      * Initialises the controller after its root element has been completely processed.
      * Sets up the GroupBar, PageBar, content area, and event listeners.
      *
@@ -192,6 +200,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         setupMenuActions();
         setupTextUndoRedo();
         setupCutCopyPaste();
+        setupBold();
 
         // Autoload existing notebook on startup
         if (new File("notebook.dat").exists()) {
@@ -205,10 +214,22 @@ public class Controller implements Initializable, PropertyChangeListener {
             }
         }
 
-        // Auto-save on window close (deferred until scene is attached)
+        // Auto-save on window close, keyboard shortcuts
         Platform.runLater(() -> {
             Stage stage = (Stage) contentArea.getScene().getWindow();
             stage.setOnCloseRequest(_ -> handleSave());
+
+            // Scene-level shortcuts for bold, italic and underline
+            contentArea.getScene().addEventFilter(
+                    KeyEvent.KEY_PRESSED, event -> {
+                        if (event.isControlDown() && !event.isShiftDown()) {
+                            if (event.getCode() == KeyCode.B) {
+                                bold.fire();
+                                event.consume();
+                            }
+                        }
+                    }
+            );
         });
     }
 
@@ -305,6 +326,141 @@ public class Controller implements Initializable, PropertyChangeListener {
             String html = currentPage.toHtml();
             HtmlBridge.populateArea(contentArea, html);
             contentArea.getUndoManager().forgetHistory();
+        }
+    }
+
+    /** Undoes the most recent command (text edit or app operation). */
+    private void handleUndo() {
+        saveCurrentContent();
+        undoRedo.undo();
+        currentPage = facade.getCurrentPage();
+        loadPageContent();
+    }
+
+    /** Redoes the most recently undone command. */
+    private void handleRedo() {
+        saveCurrentContent();
+        undoRedo.redo();
+        currentPage = facade.getCurrentPage();
+        loadPageContent();
+    }
+
+    /** Enables or disables the Undo/Redo menu items based on stack state. */
+    private void updateUndoRedoMenuState() {
+        menuUndo.setDisable(!undoRedo.canUndo());
+        menuRedo.setDisable(!undoRedo.canRedo());
+    }
+
+    /** Wires toolbar cut/copy/paste buttons with tooltips and state. */
+    private void setupCutCopyPaste() {
+        cut.setTooltip(new Tooltip("Cut (Ctrl+X)"));
+        copy.setTooltip(new Tooltip("Copy (Ctrl+C)"));
+        paste.setTooltip(new Tooltip("Paste (Ctrl+V)"));
+
+        cut.setOnAction(_ -> contentArea.cut());
+        copy.setOnAction(_ -> contentArea.copy());
+        paste.setOnAction(_ -> contentArea.paste());
+
+        // Paste availability: check clipboard when editor gains focus
+        updatePasteState();
+        contentArea.focusedProperty().addListener((_, _, focused) -> {
+            if (focused) {
+                updatePasteState();
+            }
+        });
+    }
+
+    /** Updates paste button availability based on clipboard content. */
+    private void updatePasteState() {
+        paste.setDisable(!Clipboard.getSystemClipboard().hasString());
+    }
+
+    /** Wires toolbar undo/redo buttons with tooltips, actions, and state. */
+    @SuppressWarnings("unchecked")
+    private void setupTextUndoRedo() {
+        textUndo.setTooltip(new Tooltip("Undo (Ctrl+Z)"));
+        textRedo.setTooltip(new Tooltip("Redo (Ctrl+Y)"));
+
+        textUndo.setOnAction(_ ->
+                contentArea.getUndoManager().undo());
+        textRedo.setOnAction(_ ->
+                contentArea.getUndoManager().redo());
+
+        // Bind button disabled state to undo manager availability
+        contentArea.getUndoManager().undoAvailableProperty()
+                .addListener((_, _, available) ->
+                        textUndo.setDisable(!(boolean) available));
+        contentArea.getUndoManager().redoAvailableProperty()
+                .addListener((_, _, available) ->
+                        textRedo.setDisable(!(boolean) available));
+
+        // Set initial state
+        textUndo.setDisable(!contentArea.getUndoManager().isUndoAvailable());
+        textRedo.setDisable(!contentArea.getUndoManager().isRedoAvailable());
+    }
+
+    /** Wires bold toggle with tooltip, Ctrl+B shortcut, and style logic. */
+    private void setupBold() {
+        bold.setTooltip(new Tooltip("Bold (Ctrl+B)"));
+
+        bold.setOnAction(_ -> {
+            javafx.scene.control.IndexRange sel = contentArea.getSelection();
+            if (sel.getLength() > 0) {
+                // Toggle bold on existing selection
+                String css = bold.isSelected() ? "-fx-font-weight: bold;" : "-fx-font-weight: normal;";
+                contentArea.setStyle(sel.getStart(), sel.getEnd(), css);
+                pendingStyle = null;
+            } else {
+                // No selection, bold acts on the next typed text
+                pendingStyle = bold.isSelected() ? "-fx-font-weight: bold;" : "-fx-font-weight: normal;";
+            }
+            contentArea.requestFocus();
+        });
+
+        // Apply pending style on text insertion
+        contentArea.richChanges()
+                .filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
+                .subscribe(ch -> {
+                    if (pendingStyle != null) {
+                        int start = ch.getPosition();
+                        int insertedLen = ch.getInserted().length() - ch.getRemoved().length();
+                        if (insertedLen > 0) {
+                            contentArea.setStyle(start, start + insertedLen, pendingStyle);
+                        }
+                        pendingStyle = null;
+                    }
+                });
+
+        // Update toggle state when caret or selection changes
+        contentArea.selectionProperty().addListener(
+                (_, _, _) -> updateBoldState());
+        contentArea.caretPositionProperty().addListener(
+                (_, _, _) -> updateBoldState());
+    }
+
+    /** Updates the bold toggle state based on the style at the
+     * current position. */
+    private void updateBoldState() {
+        javafx.scene.control.IndexRange sel = contentArea.getSelection();
+        int pos;
+        if (sel.getLength() > 0) {
+            pos = sel.getStart();
+        } else {    // no selection, use the caret position
+            // Look at the character just before the caret to determine the "current" formatting.
+            pos = contentArea.getCaretPosition();
+            if (pos > 0) {
+                pos--;
+            }
+        }
+        String style = contentArea.getStyleAtPosition(pos);
+        boolean isBold = (style != null) && style.contains("-fx-font-weight: bold");
+        bold.setSelected(isBold);
+        // Clear pending style when moving to a position with different formatting
+        if (!isBold && "-fx-font-weight: bold;".equals(pendingStyle)) {
+            pendingStyle = null;
+        }
+        if (isBold && "-fx-font-weight: normal;".equals(pendingStyle)) {
+            pendingStyle = null;
         }
     }
 
@@ -417,7 +573,7 @@ public class Controller implements Initializable, PropertyChangeListener {
             try {
                 java.awt.Desktop.getDesktop().browse(
                         new java.net.URI(
-                          "https://github.com/EvatsugDnalloR/NotebookApplication"));
+                                "https://github.com/EvatsugDnalloR/NotebookApplication"));
             } catch (Exception ignored) {
                 // Browser not available — silently ignore
             }
@@ -427,75 +583,5 @@ public class Controller implements Initializable, PropertyChangeListener {
                 new VBox(content, repoLink));
         alert.getDialogPane().setPrefWidth(420);
         alert.showAndWait();
-    }
-
-    /** Undoes the most recent command (text edit or app operation). */
-    private void handleUndo() {
-        saveCurrentContent();
-        undoRedo.undo();
-        currentPage = facade.getCurrentPage();
-        loadPageContent();
-    }
-
-    /** Redoes the most recently undone command. */
-    private void handleRedo() {
-        saveCurrentContent();
-        undoRedo.redo();
-        currentPage = facade.getCurrentPage();
-        loadPageContent();
-    }
-
-    /** Enables or disables the Undo/Redo menu items based on stack state. */
-    private void updateUndoRedoMenuState() {
-        menuUndo.setDisable(!undoRedo.canUndo());
-        menuRedo.setDisable(!undoRedo.canRedo());
-    }
-
-    /** Wires toolbar cut/copy/paste buttons with tooltips and state. */
-    private void setupCutCopyPaste() {
-        cut.setTooltip(new Tooltip("Cut (Ctrl+X)"));
-        copy.setTooltip(new Tooltip("Copy (Ctrl+C)"));
-        paste.setTooltip(new Tooltip("Paste (Ctrl+V)"));
-
-        cut.setOnAction(_ -> contentArea.cut());
-        copy.setOnAction(_ -> contentArea.copy());
-        paste.setOnAction(_ -> contentArea.paste());
-
-        // Paste availability: check clipboard when editor gains focus
-        updatePasteState();
-        contentArea.focusedProperty().addListener((_, _, focused) -> {
-            if (focused) {
-                updatePasteState();
-            }
-        });
-    }
-
-    /** Updates paste button availability based on clipboard content. */
-    private void updatePasteState() {
-        paste.setDisable(!Clipboard.getSystemClipboard().hasString());
-    }
-
-    /** Wires toolbar undo/redo buttons with tooltips, actions, and state. */
-    @SuppressWarnings("unchecked")
-    private void setupTextUndoRedo() {
-        textUndo.setTooltip(new Tooltip("Undo (Ctrl+Z)"));
-        textRedo.setTooltip(new Tooltip("Redo (Ctrl+Y)"));
-
-        textUndo.setOnAction(_ ->
-                contentArea.getUndoManager().undo());
-        textRedo.setOnAction(_ ->
-                contentArea.getUndoManager().redo());
-
-        // Bind button disabled state to undo manager availability
-        contentArea.getUndoManager().undoAvailableProperty()
-                .addListener((_, _, available) ->
-                        textUndo.setDisable(!(boolean) available));
-        contentArea.getUndoManager().redoAvailableProperty()
-                .addListener((_, _, available) ->
-                        textRedo.setDisable(!(boolean) available));
-
-        // Set initial state
-        textUndo.setDisable(!contentArea.getUndoManager().isUndoAvailable());
-        textRedo.setDisable(!contentArea.getUndoManager().isRedoAvailable());
     }
 }
