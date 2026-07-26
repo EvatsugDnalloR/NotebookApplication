@@ -19,16 +19,12 @@ import org.fxmisc.richtext.model.StyledSegment;
  */
 public final class HtmlBridge {
 
-    private static final Pattern SPAN_PATTERN =
-            Pattern.compile(
-                "<span\\s+style='([^']*)'>(.*?)</span>",
-                Pattern.DOTALL);
+    private static final Pattern SPAN_PATTERN = Pattern.compile(
+            "<span\\s+style='([^']*)'>(.*?)</span>", Pattern.DOTALL
+    );
 
-    private static final String WRAPPER_START =
-            "<div class='note-content'>";
+    private static final String WRAPPER_START = "<div class='note-content'>";
     private static final String WRAPPER_END = "</div>";
-
-    private HtmlBridge() { }
 
     /**
      * Populates the given text area from an HTML body string.
@@ -37,8 +33,7 @@ public final class HtmlBridge {
      * paragraph {@code <span>} elements are parsed for text and CSS
      * styles. {@code <br>} tags are silently stripped.
      */
-    public static void populateArea(InlineCssTextArea area,
-                                    String html) {
+    public static void populateArea(InlineCssTextArea area, String html) {
         area.clear();
         if (html == null || html.isBlank()) {
             return;
@@ -64,8 +59,7 @@ public final class HtmlBridge {
                 int start = fullText.length();
                 fullText.append(text);
                 if (!style.isEmpty()) {
-                    styleRanges.add(new StyleRange(start,
-                            start + text.length(), style));
+                    styleRanges.add(new StyleRange(start, start + text.length(), style));
                 }
             }
 
@@ -96,8 +90,7 @@ public final class HtmlBridge {
 
         for (int p = 0; p < area.getParagraphs().size(); p++) {
             var par = area.getParagraphs().get(p);
-            for (StyledSegment<String, String> seg
-                    : par.getStyledSegments()) {
+            for (StyledSegment<String, String> seg : par.getStyledSegments()) {
                 String style = seg.getStyle();
                 String text = seg.getSegment();
                 sb.append("<span style='")
@@ -120,8 +113,7 @@ public final class HtmlBridge {
     private static String unwrap(String html) {
         String s = html.trim();
         if (s.startsWith(WRAPPER_START) && s.endsWith(WRAPPER_END)) {
-            return s.substring(WRAPPER_START.length(),
-                    s.length() - WRAPPER_END.length());
+            return s.substring(WRAPPER_START.length(), s.length() - WRAPPER_END.length());
         }
         return s;
     }
