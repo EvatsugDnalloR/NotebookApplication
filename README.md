@@ -2,7 +2,7 @@
 
 A OneNote-like notebook application built with JavaFX 24.
 
-![Snapshots](images/snapshot_2.png)
+![Snapshots](images/snapshot_3.png)
 
 ---
 
