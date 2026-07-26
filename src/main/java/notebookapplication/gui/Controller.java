@@ -47,14 +47,16 @@ public class Controller implements Initializable, PropertyChangeListener {
     @FXML private InlineCssTextArea contentArea;
 
     /**
-     * Container for the GroupBar component that displays note groups as horizontal tabs
-     * by holding the custom GroupBar component, and the "+" button for adding new groups.
+     * Container for the GroupBar component that displays note groups as
+     * horizontal tabs by holding the custom GroupBar component, and the "+"
+     * button for adding new groups.
      */
     @FXML private HBox groupBarContainer;
 
     /**
-     * Container for the PageBar component that displays note pages as vertical tabs
-     * by holding the custom PageBar component, and the "+" button for adding new pages.
+     * Container for the PageBar component that displays note pages as
+     * vertical tabs by holding the custom PageBar component, and the "+"
+     * button for adding new pages.
      */
     @FXML private VBox pageBarContainer;
 
@@ -70,14 +72,10 @@ public class Controller implements Initializable, PropertyChangeListener {
      */
     @FXML private Button addPageBtn;
 
-    /**
-     * Toolbar button for text-level undo. Calls the RichTextFX UndoManager.
-     */
+    /** Toolbar undo button for text-level undo. */
     @FXML private Button textUndo;
 
-    /**
-     * Toolbar button for text-level redo. Calls the RichTextFX UndoManager.
-     */
+    /** Toolbar redo button for text-level redo. */
     @FXML private Button textRedo;
 
     /** Toolbar cut button. */
@@ -105,41 +103,33 @@ public class Controller implements Initializable, PropertyChangeListener {
     @FXML private MenuItem menuSave;
 
     /**
-     * Menu item under File -> Load. Triggers notebook deserialization from disk.
-     * Keyboard accelerator: Ctrl+L.
+     * Menu item under File -> Load. Triggers notebook deserialization from
+     * disk. Keyboard accelerator: Ctrl+L.
      */
     @FXML private MenuItem menuLoad;
 
     /**
-     * Menu item under File → Export. Exports notebook data to a
-     * user-chosen location.
+     * Menu item under File → Export. Exports notebook data to a user-chosen
+     * location.
      */
     @FXML private MenuItem menuExport;
 
     /**
-     * Menu item under File → Import. Imports notebook data from a
-     * user-chosen file.
+     * Menu item under File → Import. Imports notebook data from a user-chosen
+     * file.
      */
     @FXML private MenuItem menuImport;
 
-    /**
-     * Menu item under File -> Close. Saves and exits the application.
-     */
+    /** Menu item under File -> Close. Saves and exits the application. */
     @FXML private MenuItem menuClose;
 
-    /**
-     * Menu item under Help -> About. Shows application information dialogue.
-     */
+    /** Menu item under Help -> About. Shows application information dialogue. */
     @FXML private MenuItem menuAbout;
 
-    /**
-     * Menu item under Edit → Undo. Keyboard shortcut: Ctrl+Z.
-     */
+    /** Menu item under Edit → Undo. Keyboard shortcut: Ctrl+Shift+Z. */
     @FXML private MenuItem menuUndo;
 
-    /**
-     * Menu item under Edit → Redo. Keyboard shortcut: Ctrl+Y.
-     */
+    /** Menu item under Edit → Redo. Keyboard shortcut: Ctrl+Shift+Y. */
     @FXML private MenuItem menuRedo;
 
     /** The undo/redo manager shared with the facade. */
@@ -160,7 +150,8 @@ public class Controller implements Initializable, PropertyChangeListener {
      *
      * <p>- State Management: Tracks which page's content is currently displayed
      *
-     * <p>- Operation Context: Ensures operations affect the correct page during UI events
+     * <p>- Operation Context: Ensures operations affect the correct page during
+     *        UI events
      *
      * <p>This reference works in coordination with the facade's current page but
      * serves specific UI management needs that require a stable reference
@@ -168,18 +159,25 @@ public class Controller implements Initializable, PropertyChangeListener {
      */
     private NotePage currentPage;
 
-    /**
-     * When non-null, the next text insertion will be styled with this CSS.
-     * Set when the user toggles bold with no selection (i.e. wants the next typed characters to be bold/unbold).
-     * Cleared after one insertion or when the caret moves to a different position.
-     */
-    private String pendingStyle;
+    // ---------------------------------------------------------------
+    //  Text formatting pending state
+    // ---------------------------------------------------------------
 
     /**
-     * Initialises the controller after its root element has been completely processed.
-     * Sets up the GroupBar, PageBar, content area, and event listeners.
+     * CSS properties to apply on the next text insertion. Accumulated as
+     * the user toggles formatting buttons (bold/italic/underline) with no
+     * text selected. Cleared after one insertion or when the caret moves
+     * to a position with conflicting formatting.
+     */
+    private String pendingCss;
+
+    /**
+     * Initialises the controller after its root element has been completely
+     * processed. Sets up the GroupBar, PageBar, content area, and event
+     * listeners.
      *
-     * @param location the location used to resolve relative paths for the root object, or null
+     * @param location  the location used to resolve relative paths for the
+     *                  root object, or null
      * @param resources the resources used to localise the root object, or null
      */
     @Override
@@ -195,12 +193,17 @@ public class Controller implements Initializable, PropertyChangeListener {
         currentPage = facade.getCurrentPage();
         undoRedo.setOnChanged(this::updateUndoRedoMenuState);
 
+        // Override InlineCssTextArea's built-in monospace default so that italic renders correctly.
+        contentArea.setStyle("-fx-font-family: sans-serif;");
+
         loadPageContent();
         setupButtons();
         setupMenuActions();
         setupTextUndoRedo();
         setupCutCopyPaste();
-        setupBold();
+        setupToggleFormatting(bold, "-fx-font-weight: bold;", "Bold", KeyCode.B);
+        setupToggleFormatting(italic, "-fx-font-style: italic;", "Italic", KeyCode.I);
+        setupToggleFormatting(underline, "-fx-underline: true;", "Underline", KeyCode.U);
 
         // Autoload existing notebook on startup
         if (new File("notebook.dat").exists()) {
@@ -214,71 +217,93 @@ public class Controller implements Initializable, PropertyChangeListener {
             }
         }
 
-        // Auto-save on window close, keyboard shortcuts
+        // Auto-save on window close, keyboard shortcuts,
+        // and pending-CSS-on-insertion subscriber.
         Platform.runLater(() -> {
             Stage stage = (Stage) contentArea.getScene().getWindow();
             stage.setOnCloseRequest(_ -> handleSave());
 
-            // Scene-level shortcuts for bold, italic and underline
+            // Scene-level shortcuts for text formatting
             contentArea.getScene().addEventFilter(
                     KeyEvent.KEY_PRESSED, event -> {
-                        if (event.isControlDown() && !event.isShiftDown()) {
-                            if (event.getCode() == KeyCode.B) {
-                                bold.fire();
-                                event.consume();
-                            }
-                        }
+                if (event.isControlDown() && !event.isShiftDown()) {
+                    KeyCode code = event.getCode();
+                    if (code == KeyCode.B) {
+                        bold.fire();
+                        event.consume();
+                    } else if (code == KeyCode.I) {
+                        italic.fire();
+                        event.consume();
+                    } else if (code == KeyCode.U) {
+                        underline.fire();
+                        event.consume();
                     }
-            );
+                }
+            });
+
+            // Apply accumulated pending CSS when text is inserted
+            contentArea.richChanges()
+                    .filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
+                    .subscribe(ch -> {
+                if (pendingCss != null && !pendingCss.isEmpty()) {
+                    int start = ch.getPosition();
+                    int insertedLen = ch.getInserted().length() - ch.getRemoved().length();
+                    if (insertedLen > 0) {
+                        String current = contentArea.getStyleAtPosition(start);
+                        String merged = mergeCss(current, pendingCss);
+                        contentArea.setStyle(start, start + insertedLen, merged);
+                    }
+                    pendingCss = null;
+                }
+            });
         });
     }
 
-    /** Configures the action handlers for the add group and add page buttons.  */
+    /** Configures the action handlers for the add group and add page buttons. */
     private void setupButtons() {
         addGroupBtn.setOnAction(_ -> facade.createNewGroup());
         addPageBtn.setOnAction(_ -> facade.createNewPage(facade.getCurrentGroup()));
     }
 
     /**
-     * Configures menu item accelerators and action handlers for File → Save / Load.
-     * Sets Ctrl+S for save and Ctrl+L for load.
+     * Configures menu item accelerators and action handlers for
+     * File → Save / Load / Export / Import / Close, Edit → Undo / Redo,
+     * and Help → About.
      */
     private void setupMenuActions() {
-        menuSave.setAccelerator(
-                new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN));
-        menuLoad.setAccelerator(
-                new KeyCodeCombination(KeyCode.L, KeyCombination.CONTROL_DOWN));
+        menuSave.setAccelerator(new KeyCodeCombination(
+                KeyCode.S, KeyCombination.CONTROL_DOWN));
+        menuLoad.setAccelerator(new KeyCodeCombination(
+                KeyCode.L, KeyCombination.CONTROL_DOWN));
         menuSave.setOnAction(_ -> handleSave());
         menuLoad.setOnAction(_ -> handleLoad());
 
-        menuExport.setAccelerator(
-                new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN,
-                        KeyCombination.SHIFT_DOWN)
-        );
-        menuImport.setAccelerator(
-                new KeyCodeCombination(KeyCode.L, KeyCombination.CONTROL_DOWN,
-                        KeyCombination.SHIFT_DOWN)
-        );
+        menuExport.setAccelerator(new KeyCodeCombination(
+                KeyCode.S, KeyCombination.CONTROL_DOWN,
+                KeyCombination.SHIFT_DOWN));
+        menuImport.setAccelerator(new KeyCodeCombination(
+                KeyCode.L, KeyCombination.CONTROL_DOWN,
+                KeyCombination.SHIFT_DOWN));
         menuExport.setOnAction(_ -> handleExport());
         menuImport.setOnAction(_ -> handleImport());
 
         menuClose.setOnAction(_ -> handleClose());
         menuAbout.setOnAction(_ -> handleAbout());
 
-        menuUndo.setAccelerator(
-                new KeyCodeCombination(KeyCode.Z, KeyCombination.ALT_DOWN));
-        menuRedo.setAccelerator(
-                new KeyCodeCombination(KeyCode.Y, KeyCombination.ALT_DOWN));
+        menuUndo.setAccelerator(new KeyCodeCombination(
+                KeyCode.Z, KeyCombination.ALT_DOWN));
+        menuRedo.setAccelerator(new KeyCodeCombination(
+                KeyCode.Y, KeyCombination.ALT_DOWN));
         menuUndo.setOnAction(_ -> handleUndo());
         menuRedo.setOnAction(_ -> handleRedo());
-        updateUndoRedoMenuState();
     }
 
     /**
      * Handles property change events from the model.
-     * Responds to page switching and content changes to keep the UI synchronised.
+     * Responds to page switching and content changes to keep the UI
+     * synchronised.
      *
-     * @param evt the property change event containing information about the change
+     * @param evt the property change event
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -295,7 +320,6 @@ public class Controller implements Initializable, PropertyChangeListener {
                 break;
 
             case SET_CONTENT:
-                // If current page content changed externally
                 if (evt.getSource() == currentPage) {
                     loadPageContent();
                 }
@@ -306,9 +330,11 @@ public class Controller implements Initializable, PropertyChangeListener {
         }
     }
 
-    /**
-     * Saves content from the editor to the active page model via HTML.
-     */
+    // ---------------------------------------------------------------
+    //  Content save / load
+    // ---------------------------------------------------------------
+
+    /** Saves content from the editor to the active page model via HTML. */
     private void saveCurrentContent() {
         if (currentPage != null) {
             String html = HtmlBridge.extractHtml(contentArea);
@@ -318,8 +344,8 @@ public class Controller implements Initializable, PropertyChangeListener {
 
     /**
      * Loads content from the active page model into the editor.
-     * Resets the undo history so the user can't undo into the
-     * previous page's state.
+     * Resets the undo history so the user can't undo into the previous
+     * page's state.
      */
     private void loadPageContent() {
         if (currentPage != null) {
@@ -329,7 +355,11 @@ public class Controller implements Initializable, PropertyChangeListener {
         }
     }
 
-    /** Undoes the most recent command (text edit or app operation). */
+    // ---------------------------------------------------------------
+    //  App-level undo/redo
+    // ---------------------------------------------------------------
+
+    /** Undoes the most recent app-level command. */
     private void handleUndo() {
         saveCurrentContent();
         undoRedo.undo();
@@ -337,7 +367,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         loadPageContent();
     }
 
-    /** Redoes the most recently undone command. */
+    /** Redoes the most recently undone app-level command. */
     private void handleRedo() {
         saveCurrentContent();
         undoRedo.redo();
@@ -351,6 +381,34 @@ public class Controller implements Initializable, PropertyChangeListener {
         menuRedo.setDisable(!undoRedo.canRedo());
     }
 
+    // ---------------------------------------------------------------
+    //  Text-level undo/redo
+    // ---------------------------------------------------------------
+
+    /** Wires toolbar undo/redo buttons with tooltips, actions, and state. */
+    @SuppressWarnings("unchecked")
+    private void setupTextUndoRedo() {
+        textUndo.setTooltip(new Tooltip("Undo (Ctrl+Z)"));
+        textRedo.setTooltip(new Tooltip("Redo (Ctrl+Y)"));
+
+        textUndo.setOnAction(_ -> contentArea.getUndoManager().undo());
+        textRedo.setOnAction(_ -> contentArea.getUndoManager().redo());
+
+        contentArea.getUndoManager().undoAvailableProperty()
+                .addListener((_, _, available) ->
+                        textUndo.setDisable(!(boolean) available));
+        contentArea.getUndoManager().redoAvailableProperty()
+                .addListener((_, _, available) ->
+                        textRedo.setDisable(!(boolean) available));
+
+        textUndo.setDisable(!contentArea.getUndoManager().isUndoAvailable());
+        textRedo.setDisable(!contentArea.getUndoManager().isRedoAvailable());
+    }
+
+    // ---------------------------------------------------------------
+    //  Toolbar: cut / copy / paste
+    // ---------------------------------------------------------------
+
     /** Wires toolbar cut/copy/paste buttons with tooltips and state. */
     private void setupCutCopyPaste() {
         cut.setTooltip(new Tooltip("Cut (Ctrl+X)"));
@@ -361,7 +419,6 @@ public class Controller implements Initializable, PropertyChangeListener {
         copy.setOnAction(_ -> contentArea.copy());
         paste.setOnAction(_ -> contentArea.paste());
 
-        // Paste availability: check clipboard when editor gains focus
         updatePasteState();
         contentArea.focusedProperty().addListener((_, _, focused) -> {
             if (focused) {
@@ -375,94 +432,99 @@ public class Controller implements Initializable, PropertyChangeListener {
         paste.setDisable(!Clipboard.getSystemClipboard().hasString());
     }
 
-    /** Wires toolbar undo/redo buttons with tooltips, actions, and state. */
-    @SuppressWarnings("unchecked")
-    private void setupTextUndoRedo() {
-        textUndo.setTooltip(new Tooltip("Undo (Ctrl+Z)"));
-        textRedo.setTooltip(new Tooltip("Redo (Ctrl+Y)"));
 
-        textUndo.setOnAction(_ ->
-                contentArea.getUndoManager().undo());
-        textRedo.setOnAction(_ ->
-                contentArea.getUndoManager().redo());
+    // ---------------------------------------------------------------
+    //  Toolbar: bold / italic / underline
+    // ---------------------------------------------------------------
 
-        // Bind button disabled state to undo manager availability
-        contentArea.getUndoManager().undoAvailableProperty()
-                .addListener((_, _, available) ->
-                        textUndo.setDisable(!(boolean) available));
-        contentArea.getUndoManager().redoAvailableProperty()
-                .addListener((_, _, available) ->
-                        textRedo.setDisable(!(boolean) available));
+    /**
+     * Configures one toggle button for a formatting property.
+     *
+     * @param btn      the toggle button to wire
+     * @param cssProp  the CSS property to toggle (e.g.
+     *                 {@code "-fx-font-weight: bold;"})
+     * @param label    human-readable label for the tooltip
+     * @param hotkey   keyboard shortcut key (e.g. {@code KeyCode.B})
+     */
+    private void setupToggleFormatting(ToggleButton btn, String cssProp, String label, KeyCode hotkey) {
+        btn.setTooltip(new Tooltip(label + " (Ctrl+" + hotkey.getName() + ")"));
 
-        // Set initial state
-        textUndo.setDisable(!contentArea.getUndoManager().isUndoAvailable());
-        textRedo.setDisable(!contentArea.getUndoManager().isRedoAvailable());
-    }
-
-    /** Wires bold toggle with tooltip, Ctrl+B shortcut, and style logic. */
-    private void setupBold() {
-        bold.setTooltip(new Tooltip("Bold (Ctrl+B)"));
-
-        bold.setOnAction(_ -> {
+        btn.setOnAction(_ -> {
             javafx.scene.control.IndexRange sel = contentArea.getSelection();
             if (sel.getLength() > 0) {
-                // Toggle bold on existing selection
-                String css = bold.isSelected() ? "-fx-font-weight: bold;" : "-fx-font-weight: normal;";
-                contentArea.setStyle(sel.getStart(), sel.getEnd(), css);
-                pendingStyle = null;
+                // Apply toggle directly to selection
+                String current = contentArea.getStyleAtPosition(sel.getStart());
+                String newStyle = toggleCss(current, cssProp);
+                contentArea.setStyle(sel.getStart(), sel.getEnd(), newStyle);
             } else {
-                // No selection, bold acts on the next typed text
-                pendingStyle = bold.isSelected() ? "-fx-font-weight: bold;" : "-fx-font-weight: normal;";
+                // Accumulate for next typed text
+                if (pendingCss == null) {
+                    pendingCss = "";
+                }
+                pendingCss = toggleCss(pendingCss, cssProp);
             }
             contentArea.requestFocus();
         });
 
-        // Apply pending style on text insertion
-        contentArea.richChanges()
-                .filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
-                .subscribe(ch -> {
-                    if (pendingStyle != null) {
-                        int start = ch.getPosition();
-                        int insertedLen = ch.getInserted().length() - ch.getRemoved().length();
-                        if (insertedLen > 0) {
-                            contentArea.setStyle(start, start + insertedLen, pendingStyle);
-                        }
-                        pendingStyle = null;
-                    }
-                });
-
-        // Update toggle state when caret or selection changes
+        // Keep toggle state in sync with caret / selection position
         contentArea.selectionProperty().addListener(
-                (_, _, _) -> updateBoldState());
+                (_, _, _) -> updateToggleState(btn, cssProp));
         contentArea.caretPositionProperty().addListener(
-                (_, _, _) -> updateBoldState());
+                (_, _, _) -> updateToggleState(btn, cssProp));
     }
 
-    /** Updates the bold toggle state based on the style at the
-     * current position. */
-    private void updateBoldState() {
+    /** Reads the style at the current position and sets the button state. */
+    private void updateToggleState(ToggleButton btn, String cssProp) {
         javafx.scene.control.IndexRange sel = contentArea.getSelection();
         int pos;
         if (sel.getLength() > 0) {
             pos = sel.getStart();
-        } else {    // no selection, use the caret position
-            // Look at the character just before the caret to determine the "current" formatting.
+        } else {
             pos = contentArea.getCaretPosition();
             if (pos > 0) {
                 pos--;
             }
         }
         String style = contentArea.getStyleAtPosition(pos);
-        boolean isBold = (style != null) && style.contains("-fx-font-weight: bold");
-        bold.setSelected(isBold);
-        // Clear pending style when moving to a position with different formatting
-        if (!isBold && "-fx-font-weight: bold;".equals(pendingStyle)) {
-            pendingStyle = null;
-        }
-        if (isBold && "-fx-font-weight: normal;".equals(pendingStyle)) {
-            pendingStyle = null;
-        }
+        btn.setSelected(style != null && style.contains(cssProp));
     }
+
+    /**
+     * Toggles a single CSS property in a style string.
+     * If the property is present it is removed; otherwise it is appended.
+     *
+     * @param style   current CSS style string (maybe null)
+     * @param cssProp the property to toggle (e.g. {@code "-fx-font-weight: bold;"})
+     * @return the new CSS style string with the property toggled
+     */
+    private static String toggleCss(String style, String cssProp) {
+        if (style == null) {
+            return cssProp;
+        }
+        return style.contains(cssProp) ? style.replace(cssProp, "") : style + cssProp;
+    }
+
+    /**
+     * Merges two CSS style strings, keeping the right-hand side values
+     * where there is overlap.
+     *
+     * @param base the existing style
+     * @param add  the style to overlay (wins on conflict)
+     * @return merged CSS string
+     */
+    private static String mergeCss(String base, String add) {
+        if (base == null || base.isBlank()) {
+            return add;
+        }
+        if (add == null || add.isBlank()) {
+            return base;
+        }
+        return base.trim() + " " + add.trim();
+    }
+
+    // ---------------------------------------------------------------
+    //  File menu actions
+    // ---------------------------------------------------------------
 
     /** Saves the current editor content and persists the notebook to disk. */
     private void handleSave() {
@@ -475,7 +537,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         }
     }
 
-    /** Loads the notebook from disk and rebuilds the UI to reflect loaded state. */
+    /** Loads the notebook from disk and rebuilds the UI. */
     private void handleLoad() {
         saveCurrentContent();
         try {
@@ -495,18 +557,15 @@ public class Controller implements Initializable, PropertyChangeListener {
         chooser.setTitle("Export Notebook");
         chooser.setInitialFileName("notebook.dat");
         chooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter(
-                        "Notebook Data (*.dat)", "*.dat"));
+                new FileChooser.ExtensionFilter("Notebook Data (*.dat)", "*.dat"));
         File file = chooser.showSaveDialog(
                 contentArea.getScene().getWindow());
         if (file != null) {
             try {
                 facade.saveNotebook(file.getAbsolutePath());
-                LOGGER.info("Notebook exported to "
-                        + file.getAbsolutePath());
+                LOGGER.info("Notebook exported to " + file.getAbsolutePath());
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE,
-                        "Failed to export notebook", e);
+                LOGGER.log(Level.SEVERE, "Failed to export notebook", e);
             }
         }
     }
@@ -517,8 +576,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Import Notebook");
         chooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter(
-                        "Notebook Data (*.dat)", "*.dat"));
+                new FileChooser.ExtensionFilter("Notebook Data (*.dat)", "*.dat"));
         File file = chooser.showOpenDialog(
                 contentArea.getScene().getWindow());
         if (file != null) {
@@ -526,11 +584,9 @@ public class Controller implements Initializable, PropertyChangeListener {
                 facade.loadNotebook(file.getAbsolutePath());
                 currentPage = facade.getCurrentPage();
                 loadPageContent();
-                LOGGER.info("Notebook imported from "
-                        + file.getAbsolutePath());
+                LOGGER.info("Notebook imported from " + file.getAbsolutePath());
             } catch (IOException | ClassNotFoundException e) {
-                LOGGER.log(Level.SEVERE,
-                        "Failed to import notebook", e);
+                LOGGER.log(Level.SEVERE, "Failed to import notebook", e);
             }
         }
     }
@@ -546,10 +602,11 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void handleAbout() {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v2.2.1");  // update when needed
+        alert.setHeaderText("NotebookApplication v2.2.1");
 
         Label content = new Label("""
-                A OneNote-like notebook application built with JavaFX 24.
+                A OneNote-like notebook application built with
+                JavaFX 24.
 
                 Features
                 Rich text editing, note groups and pages,
@@ -563,17 +620,17 @@ public class Controller implements Initializable, PropertyChangeListener {
                 Built with
                 JavaFX 24 · JDK 24 · Maven
                 RichTextFX (InlineCssTextArea)
-                
+
                 Repository
                 """);
 
-        Hyperlink repoLink = new Hyperlink(
-                "github.com/EvatsugDnalloR/NotebookApplication");
+        Hyperlink repoLink = new Hyperlink("github.com/EvatsugDnalloR/NotebookApplication");
         repoLink.setOnAction(_ -> {
             try {
                 java.awt.Desktop.getDesktop().browse(
                         new java.net.URI(
-                                "https://github.com/EvatsugDnalloR/NotebookApplication"));
+                                "https://github.com/EvatsugDnalloR/"
+                                + "NotebookApplication"));
             } catch (Exception ignored) {
                 // Browser not available — silently ignore
             }
