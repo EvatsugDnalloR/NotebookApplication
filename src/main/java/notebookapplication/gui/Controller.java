@@ -485,18 +485,30 @@ public class Controller implements Initializable, PropertyChangeListener {
 
         btn.setOnAction(_ -> {
             IndexRange sel = contentArea.getSelection();
+            String add = btn.isSelected() ? cssOn : cssOff;
+            String remove = btn.isSelected() ? cssOff : cssOn;
             if (sel.getLength() > 0) {
-                // Apply the user's choice directly to the selection
-                String css = btn.isSelected() ? cssOn : cssOff;
-                contentArea.setStyle(sel.getStart(), sel.getEnd(), css);
+                // Merge with existing style so other formatting (bold, italic, etc.) is preserved.
+                int pos = Math.min(sel.getStart(), contentArea.getLength() - 1);
+                String current = "";
+                if (contentArea.getLength() > 0 && pos >= 0) {
+                    current = contentArea.getStyleAtPosition(pos);
+                    if (current == null) {
+                        current = "";
+                    }
+                }
+                String newStyle = CSSHelper.ensureProperty(current, add);
+                newStyle = CSSHelper.stripProperty(newStyle, remove);
+                contentArea.setStyle(sel.getStart(), sel.getEnd(), newStyle);
+
+                // Prevent UndoManager from merging this style change with adjacent ones
+                contentArea.getUndoManager().preventMerge();
             } else {
                 /*
                  * No selection, record the intent for the next typed character.
                  * Use the button's selected state to decide whether to add the ON or OFF variant.
                  * Also remove the opposite variant so that pendingCss never contains conflicting properties.
                  */
-                String add = btn.isSelected() ? cssOn : cssOff;
-                String remove = btn.isSelected() ? cssOff : cssOn;
                 if (pendingCss == null) {
                     pendingCss = "";
                 }
