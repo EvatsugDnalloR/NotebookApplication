@@ -549,7 +549,7 @@ public class Controller implements Initializable,
     private void handleAbout() {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v2.3.3");
+        alert.setHeaderText("NotebookApplication v2.4.3");
 
         Label content = new Label("""
                 A OneNote-like notebook application built with
