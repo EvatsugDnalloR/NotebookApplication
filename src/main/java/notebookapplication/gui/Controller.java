@@ -414,7 +414,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     }
 
     // ---------------------------------------------------------------
-    //  Toolbar: bold / italic / underline
+    //  Toolbar: font family/size/colour selector
     // ---------------------------------------------------------------
 
     /**
@@ -467,6 +467,10 @@ public class Controller implements Initializable, PropertyChangeListener {
         }
     }
 
+    // ---------------------------------------------------------------
+    //  Toolbar: bold / italic / underline
+    // ---------------------------------------------------------------
+
     /**
      * Configures one toggle button for a formatting property with explicit ON and OFF CSS variants.
      *
@@ -488,8 +492,8 @@ public class Controller implements Initializable, PropertyChangeListener {
             String add = btn.isSelected() ? cssOn : cssOff;
             String remove = btn.isSelected() ? cssOff : cssOn;
             if (sel.getLength() > 0) {
-                // Merge with existing style so other formatting (bold, italic, etc.) is preserved.
-                int pos = Math.min(sel.getStart(), contentArea.getLength() - 1);
+                // Read from the middle of the selection to avoid paragraph-boundary / newline artefacts.
+                int pos = Math.min(sel.getStart() + sel.getLength() / 2, contentArea.getLength() - 1);
                 String current = "";
                 if (contentArea.getLength() > 0 && pos >= 0) {
                     current = contentArea.getStyleAtPosition(pos);
