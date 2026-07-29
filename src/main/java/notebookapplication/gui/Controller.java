@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.LinkedHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,6 +19,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.fxmisc.richtext.InlineCssTextArea;
@@ -91,6 +93,9 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** Toolbar underline toggle button. */
     @FXML private ToggleButton underline;
 
+    /** Font selector combobox. */
+    @FXML private ComboBox<String> fontSelector;
+
     /**
      * Menu item under File → Save. Triggers notebook serialization to disk.
      * Keyboard accelerator: Ctrl+S.
@@ -163,8 +168,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         currentPage = facade.getCurrentPage();
         undoRedo.setOnChanged(this::updateUndoRedoMenuState);
 
-        // Override InlineCssTextArea's built-in monospace default so that
-        // italic renders correctly (monospace lacks italic glyphs).
+        // Override InlineCssTextArea's built-in monospace default so that italic renders correctly
         contentArea.setStyle("-fx-font-family: sans-serif;");
 
         loadPageContent();
@@ -181,6 +185,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         setupToggleFormatting(underline,
                 "-fx-underline: true;", "-fx-underline: false;",
                 "Underline", KeyCode.U);
+        setupFontSelector();
 
         // Autoload existing notebook on startup
         if (new File("notebook.dat").exists()) {
@@ -411,6 +416,56 @@ public class Controller implements Initializable, PropertyChangeListener {
     // ---------------------------------------------------------------
     //  Toolbar: bold / italic / underline
     // ---------------------------------------------------------------
+
+    /**
+     * System-font-name → display-label pairs for the font selector.
+     * Display labels use the format {@code "English Name (中文名)"}
+     * for CJK fonts so both readers can find them.
+     */
+    private static final LinkedHashMap<String, String> PREFERRED_FONTS = new LinkedHashMap<>();
+
+    static {
+        // Latin / code / general-purpose fonts
+        PREFERRED_FONTS.put("Arial", "Arial");
+        PREFERRED_FONTS.put("Calibri", "Calibri");
+        PREFERRED_FONTS.put("Cambria", "Cambria");
+        PREFERRED_FONTS.put("Cascadia Code", "Cascadia Code");
+        PREFERRED_FONTS.put("Century Gothic", "Century Gothic");
+        PREFERRED_FONTS.put("Consolas", "Consolas");
+        PREFERRED_FONTS.put("Georgia", "Georgia");
+        PREFERRED_FONTS.put("JetBrainsMono NF", "JetBrainsMono NF");
+        PREFERRED_FONTS.put("Segoe UI", "Segoe UI");
+        PREFERRED_FONTS.put("Verdana", "Verdana");
+
+        // CJK fonts with bilingual display names
+        PREFERRED_FONTS.put("Microsoft YaHei", "Microsoft YaHei (微软雅黑)");
+        PREFERRED_FONTS.put("Microsoft JhengHei", "Microsoft JhengHei (微軟正黑體)");
+        PREFERRED_FONTS.put("SimSun", "SimSun (宋体)");
+        PREFERRED_FONTS.put("SimHei", "SimHei (黑体)");
+        PREFERRED_FONTS.put("FangSong", "FangSong (仿宋)");
+        PREFERRED_FONTS.put("KaiTi", "KaiTi (楷体)");
+        PREFERRED_FONTS.put("DengXian", "DengXian (等线)");
+        PREFERRED_FONTS.put("NSimSun", "NSimSun (新宋体)");
+        PREFERRED_FONTS.put("Yu Gothic", "Yu Gothic (游ゴシック)");
+        PREFERRED_FONTS.put("华文细黑", "华文细黑 (STHeiti Light)");
+    }
+
+    /** Pre-populates the font selector with a curated subset of
+     * installed system fonts. */
+    private void setupFontSelector() {
+        fontSelector.getItems().clear();
+        for (String family : Font.getFamilies()) {
+            for (var entry : PREFERRED_FONTS.entrySet()) {
+                if (family.equalsIgnoreCase(entry.getKey())) {
+                    fontSelector.getItems().add(entry.getValue());
+                    break;
+                }
+            }
+        }
+        if (!fontSelector.getItems().isEmpty()) {
+            fontSelector.getSelectionModel().selectFirst();
+        }
+    }
 
     /**
      * Configures one toggle button for a formatting property with explicit ON and OFF CSS variants.
