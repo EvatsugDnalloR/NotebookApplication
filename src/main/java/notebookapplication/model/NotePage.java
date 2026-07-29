@@ -24,12 +24,14 @@ public class NotePage extends NoteSubject implements Serializable {
     private final UUID id;
     private String pageName;
     private String htmlBodyContent;
+    private String fontFamily;
 
     /** Creates a new note page with default title and empty content. */
     public NotePage() {
         this.id = UUID.randomUUID();
         this.pageName = "Untitled Page";
         this.htmlBodyContent = null;
+        this.fontFamily = "Arial";  // default font
         support = new PropertyChangeSupport(this);
     }
 
@@ -42,6 +44,7 @@ public class NotePage extends NoteSubject implements Serializable {
         this.id = UUID.randomUUID();
         this.pageName = pageName;
         this.htmlBodyContent = null;
+        this.fontFamily = "Arial";  // default font
         support = new PropertyChangeSupport(this);
     }
 
@@ -66,7 +69,22 @@ public class NotePage extends NoteSubject implements Serializable {
         );
     }
 
-    // --- HTML body content (primary storage) ---
+    /**
+     * Font family getter.
+     *
+     * @return  String of font family the current page has
+     */
+    public String getFontFamily() {
+        return fontFamily;
+    }
+
+    /**
+     * Sets the font family for this page.
+     * Page-level setting that does not affect per-character bold/italic/underline formatting.
+     */
+    public void setFontFamily(String fontFamily) {
+        this.fontFamily = fontFamily;
+    }
 
     /**
      * Returns the raw HTML body content stored by the HTMLEditor.
