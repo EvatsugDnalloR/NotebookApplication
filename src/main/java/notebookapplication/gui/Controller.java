@@ -35,10 +35,8 @@ import notebookapplication.model.NotePage;
  *
  * <p>Implements both Initializable and PropertyChangeListene interfaces.
  */
-public class Controller implements Initializable,
-        PropertyChangeListener {
-    private static final Logger LOGGER =
-            Logger.getLogger(Controller.class.getName());
+public class Controller implements Initializable, PropertyChangeListener {
+    private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
     /**
      * The main content area where users can view and edit the text of the current note page.
@@ -86,6 +84,9 @@ public class Controller implements Initializable,
 
     /** Font selector combobox. */
     @FXML private ComboBox<String> fontSelector;
+
+    /** Font size spinner (editable, 8–72). */
+    @FXML private Spinner<Double> fontSizeSpinner;
 
     /** File → Save. */
     @FXML private MenuItem menuSave;
@@ -161,6 +162,7 @@ public class Controller implements Initializable,
                 "-fx-underline: true;", "-fx-underline: false;",
                 "Underline", KeyCode.U);
         setupFontSelector();
+        setupFontSizeSpinner();
 
         if (new File("notebook.dat").exists()) {
             try {
@@ -360,8 +362,7 @@ public class Controller implements Initializable,
     //  Toolbar: font family selector
     // ---------------------------------------------------------------
 
-    private static final LinkedHashMap<String, String>
-            PREFERRED_FONTS = new LinkedHashMap<>();
+    private static final LinkedHashMap<String, String> PREFERRED_FONTS = new LinkedHashMap<>();
 
     static {
         PREFERRED_FONTS.put("Arial", "Arial");
@@ -424,6 +425,33 @@ public class Controller implements Initializable,
             }
         }
         return displayLabel;
+    }
+
+    // ---------------------------------------------------------------
+    //  Toolbar: font size selector
+    // ---------------------------------------------------------------
+
+    private void setupFontSizeSpinner() {
+        SpinnerValueFactory.DoubleSpinnerValueFactory factory = new SpinnerValueFactory.DoubleSpinnerValueFactory(
+                8.0, 72.0, 12.0, 0.5);
+        // Fault-tolerant conversion: unparseable input (e.g. "abc") falls back to the current value
+        factory.setConverter(new javafx.util.StringConverter<Double>() {
+            @Override
+            public String toString(Double value) {
+                return value == null ? "" : String.valueOf(value);
+            }
+
+            @Override
+            public Double fromString(String text) {
+                try {
+                    return Double.parseDouble(text.trim());
+                } catch (NumberFormatException e) {
+                    return factory.getValue();
+                }
+            }
+        });
+        fontSizeSpinner.setValueFactory(factory);
+        fontSizeSpinner.setEditable(true);
     }
 
     // ---------------------------------------------------------------
