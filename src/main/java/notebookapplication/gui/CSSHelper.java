@@ -54,7 +54,32 @@ public final class CSSHelper {
         return base.trim() + " " + add.trim();
     }
 
-
+    /**
+     * Replaces any CSS property matching {@code prefix} with {@code newProperty}.
+     * Used for value-replacement properties (font-size, font-family, colour),
+     * where the new value should replace the old one rather than stack.
+     *
+     * @param style       the CSS style string
+     * @param prefix      the CSS property prefix (e.g. {@code "-fx-font-size:"})
+     * @param newProperty the replacement property (pass {@code ""} to remove)
+     * @return the style with the old property replaced
+     */
+    public static String replaceProperty(String style, String prefix, String newProperty) {
+        if (style == null || style.isBlank()) {
+            return newProperty;
+        }
+        String result = style.replaceAll(
+                java.util.regex.Pattern.quote(prefix) + "[^;]*;",
+                "");
+        result = result.replaceAll(" +", " ").trim();
+        if (result.isEmpty()) {
+            return newProperty;
+        }
+        if (newProperty.isEmpty()) {
+            return result;
+        }
+        return result + " " + newProperty;
+    }
 
     /**
      * Strips CSS properties from {@code base} that conflict with{@code pending}.
@@ -71,5 +96,23 @@ public final class CSSHelper {
             }
         }
         return result.replaceAll(" +", " ").trim();
+    }
+
+    /** Extracts the numeric font size from a CSS style string. */
+    public static Double parseFontSize(String style) {
+        if (style == null) return null;
+        String prefix = "-fx-font-size:";
+        int idx = style.indexOf(prefix);
+        if (idx == -1) return null;
+        int start = idx + prefix.length();
+        int end = style.indexOf(";", start);
+        if (end == -1) end = style.length();
+        String value = style.substring(start, end).trim();
+        value = value.replaceAll("(?i)(pt|px|em)$", "").trim(); // strip a trailing unit (pt, px, em)
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

@@ -15,6 +15,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.SpinnerValueFactory.DoubleSpinnerValueFactory;
 import javafx.scene.input.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -33,7 +34,7 @@ import notebookapplication.model.NotePage;
  *
  * <p>Handles UI initialisation, button actions, and content synchronisation.
  *
- * <p>Implements both Initializable and PropertyChangeListene interfaces.
+ * <p>Implements both Initializable and PropertyChangeListener interfaces.
  */
 public class Controller implements Initializable, PropertyChangeListener {
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
@@ -115,8 +116,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** The app-level undo/redo manager shared with the facade. */
     private final UndoRedo undoRedo = new UndoRedo();
 
-    /** The main facade that provides access to all notebook model
-     * operations. */
+    /** The main facade that provides access to all notebook model operations. */
     private final NoteFacade facade = new NoteFacade(undoRedo);
 
     /** The current page being edited in the content area. */
@@ -124,12 +124,19 @@ public class Controller implements Initializable, PropertyChangeListener {
 
     /**
      * CSS properties to apply on the next text insertion.
-     * Accumulated as the user toggles formatting buttons (bold/italic/underline) with no text selected.
+     * Accumulated as the user toggles formatting buttons (bold/italic/underline)
+     * or changes font size with no text selected.
      */
     private String pendingCss;
 
     /** Default font family applied to new pages. */
     private static final String DEFAULT_FONT = "Arial";
+
+    /** Default font size (pt) for new content. */
+    private static final double DEFAULT_FONT_SIZE = 12.0;
+
+    /** Guards against programmatic spinner updates re-entering the value-change listener. */
+    private boolean suppressSpinnerUpdate;
 
     // ---------------------------------------------------------------
 
@@ -144,8 +151,8 @@ public class Controller implements Initializable, PropertyChangeListener {
         currentPage = facade.getCurrentPage();
         undoRedo.setOnChanged(this::updateUndoRedoMenuState);
 
-        // Set the default page font, loadPageContent() below will override with the current page's saved font.
-        contentArea.setStyle("-fx-font-family: " + DEFAULT_FONT + ";");
+        // Default base style: Arial at 12pt. loadPageContent() may override the family with the page's saved font.
+        contentArea.setStyle("-fx-font-family: " + DEFAULT_FONT + "; -fx-font-size: " + DEFAULT_FONT_SIZE + "pt;");
 
         loadPageContent();
         setupButtons();
@@ -204,7 +211,14 @@ public class Controller implements Initializable, PropertyChangeListener {
                     int start = ch.getPosition();
                     int insertedLen = ch.getInserted().length() - ch.getRemoved().length();
                     String current = contentArea.getStyleAtPosition(start);
-                    String merged = CSSHelper.mergeCss(CSSHelper.stripConflicting(current, pendingCss), pendingCss);
+                    // Strip base properties that conflict or overlap
+                    // with pendingCss before merging. Font-size is a
+                    // replacement property — strip the base's old value.
+                    String base = CSSHelper.stripConflicting(current, pendingCss);
+                    if (pendingCss.contains("-fx-font-size:")) {
+                        base = CSSHelper.replaceProperty(base, "-fx-font-size:", "");
+                    }
+                    String merged = CSSHelper.mergeCss(base, pendingCss);
                     contentArea.setStyle(start, start + insertedLen, merged);
                 }
                 pendingCss = null;
@@ -393,8 +407,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         for (String family : Font.getFamilies()) {
             for (var entry : PREFERRED_FONTS.entrySet()) {
                 if (family.equalsIgnoreCase(entry.getKey())) {
-                    fontSelector.getItems()
-                            .add(entry.getValue());
+                    fontSelector.getItems().add(entry.getValue());
                     break;
                 }
             }
@@ -410,9 +423,21 @@ public class Controller implements Initializable, PropertyChangeListener {
         });
     }
 
-    /** Applies a font to the entire content area and syncs the ComboBox without firing onAction. */
+    /**
+     * Applies a font to the entire content area and syncs the ComboBox without firing onAction.
+     * Preserves the font-size property.
+     *
+     * @param systemFont  the font to apply
+     */
     private void applyPageFont(String systemFont) {
-        contentArea.setStyle("-fx-font-family: " + systemFont + ";");
+        String current = contentArea.getStyle();
+        if (current == null || current.isBlank()) {
+            current = "-fx-font-size: " + DEFAULT_FONT_SIZE + "pt;";
+        }
+        String newStyle = CSSHelper.replaceProperty(current,
+                "-fx-font-family:",
+                "-fx-font-family: " + systemFont + ";");
+        contentArea.setStyle(newStyle);
         String displayLabel = PREFERRED_FONTS.get(systemFont);
         if (displayLabel != null) fontSelector.getSelectionModel().select(displayLabel);
     }
@@ -432,10 +457,29 @@ public class Controller implements Initializable, PropertyChangeListener {
     // ---------------------------------------------------------------
 
     private void setupFontSizeSpinner() {
-        SpinnerValueFactory.DoubleSpinnerValueFactory factory = new SpinnerValueFactory.DoubleSpinnerValueFactory(
-                8.0, 72.0, 12.0, 0.5);
+        DoubleSpinnerValueFactory factory = setupDoubleSpinnerValueFactory();
+        fontSizeSpinner.setValueFactory(factory);
+        fontSizeSpinner.setEditable(true);
+
+        // User changed the size (arrows, typing + Enter): apply it.
+        factory.valueProperty().addListener((_, _, newVal) -> {
+            if (suppressSpinnerUpdate || newVal == null) return;
+            applyFontSize(newVal);
+        });
+
+        // Keep the spinner in sync with the caret / selection.
+        contentArea.selectionProperty().addListener(
+                (_, _, _) -> updateFontSizeState());
+        contentArea.caretPositionProperty().addListener(
+                (_, _, _) -> updateFontSizeState());
+    }
+
+    private DoubleSpinnerValueFactory setupDoubleSpinnerValueFactory() {
+        DoubleSpinnerValueFactory factory = new DoubleSpinnerValueFactory(
+                8.0, 72.0, DEFAULT_FONT_SIZE, 0.5);
+
         // Fault-tolerant conversion: unparseable input (e.g. "abc") falls back to the current value
-        factory.setConverter(new javafx.util.StringConverter<Double>() {
+        factory.setConverter(new javafx.util.StringConverter<>() {
             @Override
             public String toString(Double value) {
                 return value == null ? "" : String.valueOf(value);
@@ -450,8 +494,87 @@ public class Controller implements Initializable, PropertyChangeListener {
                 }
             }
         });
-        fontSizeSpinner.setValueFactory(factory);
-        fontSizeSpinner.setEditable(true);
+        return factory;
+    }
+
+    /** Applies a font size to the selection or accumulates it for the next typed characters when nothing is selected.*/
+    private void applyFontSize(double size) {
+        String css = "-fx-font-size: " + size + "pt;";
+        IndexRange sel = contentArea.getSelection();
+        if (sel.getLength() > 0) {
+            String current = getCurrentStyle(sel);
+            String newStyle = CSSHelper.replaceProperty(current, "-fx-font-size:", css);
+            contentArea.setStyle(sel.getStart(), sel.getEnd(), newStyle);
+            contentArea.getUndoManager().preventMerge();
+        } else {
+            if (pendingCss == null) pendingCss = "";
+            pendingCss = CSSHelper.replaceProperty(pendingCss, "-fx-font-size:", css);
+        }
+        contentArea.requestFocus();
+    }
+
+    private String getCurrentStyle(IndexRange sel) {
+        int pos = Math.min(sel.getStart() + sel.getLength() / 2, contentArea.getLength() - 1);
+        String current = "";
+        if (contentArea.getLength() > 0 && pos >= 0) {
+            current = contentArea.getStyleAtPosition(pos);
+            if (current == null) current = "";
+        }
+        return current;
+    }
+
+    /** Updates the spinner to reflect the size at the selection / caret. */
+    private void updateFontSizeState() {
+        if (pendingCss != null) return;  // user has a pending choice
+
+        IndexRange sel = contentArea.getSelection();
+        Double size;
+        if (sel.getLength() > 0) {
+            // Selection: show the uniform size, or empty if mixed.
+            size = selectionUniformFontSize(sel);
+        } else {
+            // Caret: show the size at the caret position.
+            if (contentArea.getLength() == 0) {
+                size = DEFAULT_FONT_SIZE;
+            } else {
+                int pos = contentArea.getCaretPosition();
+                pos = pos > 0 ? pos - 1 : 0;
+                size = CSSHelper.parseFontSize(contentArea.getStyleAtPosition(pos));
+                if (size == null) size = DEFAULT_FONT_SIZE;
+            }
+        }
+
+        if (size == null) {
+            fontSizeSpinner.getEditor().setText("");
+        } else {
+            suppressSpinnerUpdate = true;
+            try {
+                fontSizeSpinner.getValueFactory().setValue(size);
+            } finally {
+                suppressSpinnerUpdate = false;
+            }
+        }
+    }
+
+    /**
+     * Returns the font size if every character in the selection shares it; returns {@code null} if sizes are mixed.
+     * Characters without an explicit size are treated as the default.
+     */
+    private Double selectionUniformFontSize(IndexRange sel) {
+        if (sel.getLength() == 0 || contentArea.getLength() == 0) {
+            return null;
+        }
+        Double common = null;
+        for (int p = sel.getStart(); p < sel.getEnd(); p++) {
+            Double size = CSSHelper.parseFontSize(contentArea.getStyleAtPosition(p));
+            if (size == null) size = DEFAULT_FONT_SIZE;
+            if (common == null) {
+                common = size;
+            } else if (Math.abs(common - size) > 1e-9) {
+                return null;  // mixed sizes
+            }
+        }
+        return common;
     }
 
     // ---------------------------------------------------------------
@@ -466,12 +589,7 @@ public class Controller implements Initializable, PropertyChangeListener {
             String add = btn.isSelected() ? cssOn : cssOff;
             String remove = btn.isSelected() ? cssOff : cssOn;
             if (sel.getLength() > 0) {
-                int pos = Math.min(sel.getStart() + sel.getLength() / 2, contentArea.getLength() - 1);
-                String current = "";
-                if (contentArea.getLength() > 0 && pos >= 0) {
-                    current = contentArea.getStyleAtPosition(pos);
-                    if (current == null) current = "";
-                }
+                String current = getCurrentStyle(sel);
                 String newStyle = CSSHelper.ensureProperty(current, add);
                 newStyle = CSSHelper.stripProperty(newStyle, remove);
                 contentArea.setStyle(sel.getStart(), sel.getEnd(), newStyle);
