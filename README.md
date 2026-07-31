@@ -23,7 +23,7 @@ A OneNote-like notebook application built with JavaFX 24.
 - [x] Text-level undo/redo — migrate from `HTMLEditor` to `RichTextFX`
 - [x] Wire text editing toolbar: bold, italic, underline
 - [x] Wire cut / copy / paste toolbar buttons
-- [ ] Wire font family and font size selectors
+- [x] Wire font family and font size selectors
 - [ ] Wire text colour picker
 - [ ] Wire bullet points, numbered lists, and checkboxes
 - [ ] Wire text alignment (left, centre, right)
