@@ -142,6 +142,12 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** Default text colour for new content. */
     private static final Color DEFAULT_COLOR = Color.BLACK;
 
+    /**
+     * Placeholder shown in the picker while a mixed-colour selection is active.
+     * Any colour the user picks while this is displayed changes the value, so it is always applied.
+     */
+    private static final Color SENTINEL_COLOR = Color.TRANSPARENT;
+
     /** Guards against programmatic spinner updates re-entering the value-change listener. */
     private boolean suppressSpinnerUpdate;
 
@@ -601,6 +607,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         // User changed the colour: apply it.
         colorPicker.valueProperty().addListener((_, _, newVal) -> {
             if (suppressColorUpdate || newVal == null) return;
+            if (SENTINEL_COLOR.equals(newVal)) return;  // ignore placeholder
             applyColor(newVal);
         });
 
@@ -637,7 +644,11 @@ public class Controller implements Initializable, PropertyChangeListener {
         if (sel.getLength() > 0) {
             // Selection: show the colour only if uniform, otherwise leave the picker untouched.
             colour = selectionUniformColor(sel);
-            if (colour == null) return;
+            if (colour == null) {
+                // For mixed colours, show the transparent placeholder in colour picker
+                showSentinelColor();
+                return;
+            }
         } else {
             // Caret: show the colour at the caret position.
             if (contentArea.getLength() == 0) {
@@ -659,9 +670,8 @@ public class Controller implements Initializable, PropertyChangeListener {
     }
 
     /**
-     * Returns the colour if every character in the selection shares
-     * it; returns {@code null} if colours are mixed. Characters without
-     * an explicit colour are treated as the default.
+     * Returns the colour if every character in the selection shares it; returns {@code null} if colours are mixed.
+     * Characters without an explicit colour are treated as the default.
      */
     private Color selectionUniformColor(IndexRange sel) {
         if (sel.getLength() == 0 || contentArea.getLength() == 0) {
@@ -678,6 +688,16 @@ public class Controller implements Initializable, PropertyChangeListener {
             }
         }
         return common;
+    }
+
+    /** Shows the transparent placeholder in the picker. */
+    private void showSentinelColor() {
+        suppressColorUpdate = true;
+        try {
+            colorPicker.setValue(SENTINEL_COLOR);
+        } finally {
+            suppressColorUpdate = false;
+        }
     }
 
     // ---------------------------------------------------------------
@@ -825,7 +845,7 @@ public class Controller implements Initializable, PropertyChangeListener {
             try {
                 java.awt.Desktop.getDesktop().browse(
                         new java.net.URI("https://github.com/EvatsugDnalloR/NotebookApplication"));
-            } catch (Exception ignored) { }  // Browser not available, silently ignore
+            } catch (Exception ignored) { }  // browser not available, silently ignore
         });
 
         alert.getDialogPane().setContent(new VBox(content, repoLink));
