@@ -818,7 +818,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void handleAbout() {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v2.6.3");
+        alert.setHeaderText("NotebookApplication v2.6.4");
 
         Label content = new Label("""
                 A OneNote-like notebook application built with
