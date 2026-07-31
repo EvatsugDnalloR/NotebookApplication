@@ -19,6 +19,7 @@ import javafx.scene.control.SpinnerValueFactory.DoubleSpinnerValueFactory;
 import javafx.scene.input.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -89,6 +90,9 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** Font size spinner (editable, 8–72). */
     @FXML private Spinner<Double> fontSizeSpinner;
 
+    /** Text colour picker. */
+    @FXML private ColorPicker colorPicker;
+
     /** File → Save. */
     @FXML private MenuItem menuSave;
 
@@ -135,8 +139,14 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** Default font size (pt) for new content. */
     private static final double DEFAULT_FONT_SIZE = 12.0;
 
+    /** Default text colour for new content. */
+    private static final Color DEFAULT_COLOR = Color.BLACK;
+
     /** Guards against programmatic spinner updates re-entering the value-change listener. */
     private boolean suppressSpinnerUpdate;
+
+    /** Guards against programmatic colour-picker updates re-entering the value-change listener. */
+    private boolean suppressColorUpdate;
 
     // ---------------------------------------------------------------
 
@@ -170,6 +180,7 @@ public class Controller implements Initializable, PropertyChangeListener {
                 "Underline", KeyCode.U);
         setupFontSelector();
         setupFontSizeSpinner();
+        setupColorPicker();
 
         if (new File("notebook.dat").exists()) {
             try {
@@ -217,6 +228,9 @@ public class Controller implements Initializable, PropertyChangeListener {
                     String base = CSSHelper.stripConflicting(current, pendingCss);
                     if (pendingCss.contains("-fx-font-size:")) {
                         base = CSSHelper.replaceProperty(base, "-fx-font-size:", "");
+                    }
+                    if (pendingCss.contains("-fx-fill:")) {
+                        base = CSSHelper.replaceProperty(base, "-fx-fill:", "");
                     }
                     String merged = CSSHelper.mergeCss(base, pendingCss);
                     contentArea.setStyle(start, start + insertedLen, merged);
@@ -572,6 +586,95 @@ public class Controller implements Initializable, PropertyChangeListener {
                 common = size;
             } else if (Math.abs(common - size) > 1e-9) {
                 return null;  // mixed sizes
+            }
+        }
+        return common;
+    }
+
+    // ---------------------------------------------------------------
+    //  Toolbar: colour picker
+    // ---------------------------------------------------------------
+
+    private void setupColorPicker() {
+        colorPicker.setValue(DEFAULT_COLOR);
+
+        // User changed the colour: apply it.
+        colorPicker.valueProperty().addListener((_, _, newVal) -> {
+            if (suppressColorUpdate || newVal == null) return;
+            applyColor(newVal);
+        });
+
+        // Keep the picker in sync with the caret / selection.
+        contentArea.selectionProperty().addListener(
+                (_, _, _) -> updateColorState());
+        contentArea.caretPositionProperty().addListener(
+                (_, _, _) -> updateColorState());
+    }
+
+    /** Applies a colour to the selection, or accumulates it for the
+     * next typed characters when nothing is selected. */
+    private void applyColor(Color color) {
+        String css = "-fx-fill: " + CSSHelper.colorToHex(color) + ";";
+        IndexRange sel = contentArea.getSelection();
+        if (sel.getLength() > 0) {
+            String current = getCurrentStyle(sel);
+            String newStyle = CSSHelper.replaceProperty(current, "-fx-fill:", css);
+            contentArea.setStyle(sel.getStart(), sel.getEnd(), newStyle);
+            contentArea.getUndoManager().preventMerge();
+        } else {
+            if (pendingCss == null) pendingCss = "";
+            pendingCss = CSSHelper.replaceProperty(pendingCss, "-fx-fill:", css);
+        }
+        contentArea.requestFocus();
+    }
+
+    /** Updates the picker to reflect the colour at the selection / caret. */
+    private void updateColorState() {
+        if (pendingCss != null) return;  // user has a pending choice
+
+        IndexRange sel = contentArea.getSelection();
+        Color colour;
+        if (sel.getLength() > 0) {
+            // Selection: show the colour only if uniform, otherwise leave the picker untouched.
+            colour = selectionUniformColor(sel);
+            if (colour == null) return;
+        } else {
+            // Caret: show the colour at the caret position.
+            if (contentArea.getLength() == 0) {
+                colour = DEFAULT_COLOR;
+            } else {
+                int pos = contentArea.getCaretPosition();
+                pos = pos > 0 ? pos - 1 : 0;
+                colour = CSSHelper.parseColor(contentArea.getStyleAtPosition(pos));
+                if (colour == null) colour = DEFAULT_COLOR;
+            }
+        }
+
+        suppressColorUpdate = true;
+        try {
+            colorPicker.setValue(colour);
+        } finally {
+            suppressColorUpdate = false;
+        }
+    }
+
+    /**
+     * Returns the colour if every character in the selection shares
+     * it; returns {@code null} if colours are mixed. Characters without
+     * an explicit colour are treated as the default.
+     */
+    private Color selectionUniformColor(IndexRange sel) {
+        if (sel.getLength() == 0 || contentArea.getLength() == 0) {
+            return null;
+        }
+        Color common = null;
+        for (int p = sel.getStart(); p < sel.getEnd(); p++) {
+            Color colour = CSSHelper.parseColor(contentArea.getStyleAtPosition(p));
+            if (colour == null) colour = DEFAULT_COLOR;
+            if (common == null) {
+                common = colour;
+            } else if (!common.equals(colour)) {
+                return null;  // mixed colours
             }
         }
         return common;

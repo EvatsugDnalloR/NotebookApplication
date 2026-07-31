@@ -1,6 +1,8 @@
 package notebookapplication.gui;
 
 
+import javafx.scene.paint.Color;
+
 /**
  * Static utility methods for manipulating inline CSS style strings used
  * by RichTextFX's {@link org.fxmisc.richtext.InlineCssTextArea}.
@@ -100,19 +102,42 @@ public final class CSSHelper {
 
     /** Extracts the numeric font size from a CSS style string. */
     public static Double parseFontSize(String style) {
-        if (style == null) return null;
-        String prefix = "-fx-font-size:";
-        int idx = style.indexOf(prefix);
-        if (idx == -1) return null;
-        int start = idx + prefix.length();
-        int end = style.indexOf(";", start);
-        if (end == -1) end = style.length();
-        String value = style.substring(start, end).trim();
+        String value = getExtractedString(style, "-fx-font-size:");
+        if (value == null) return null;
         value = value.replaceAll("(?i)(pt|px|em)$", "").trim(); // strip a trailing unit (pt, px, em)
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    /** Extracts the fill colour from a CSS style string. */
+    public static Color parseColor(String style) {
+        String value = getExtractedString(style, "-fx-fill:");
+        if (value == null) return null;
+        try {
+            return javafx.scene.paint.Color.web(value);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static String getExtractedString(String style, String prefix) {
+        if (style == null) return null;
+        int idx = style.indexOf(prefix);
+        if (idx == -1) return null;
+        int start = idx + prefix.length();
+        int end = style.indexOf(";", start);
+        if (end == -1) end = style.length();
+        return style.substring(start, end).trim();
+    }
+
+    /** Converts a colour to {@code #RRGGBB} CSS form. */
+    public static String colorToHex(Color color) {
+        int r = (int) Math.round(color.getRed() * 255);
+        int g = (int) Math.round(color.getGreen() * 255);
+        int b = (int) Math.round(color.getBlue() * 255);
+        return String.format("#%02X%02X%02X", r, g, b);
     }
 }
