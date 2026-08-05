@@ -127,6 +127,18 @@ public final class CssHelper {
         }
     }
 
+    /**
+     * Extracts the value of a CSS property from a style string.
+     *
+     * <p>Locates the first occurrence of {@code prefix} (e.g. {@code "-fx-text-alignment:"})
+     * and returns everything from the end of the prefix up to the next {@code ';'}
+     * (or the end of the string), trimmed.
+     * Returns {@code null} if the prefix is absent.
+     *
+     * @param style  the CSS style string to search, or {@code null}
+     * @param prefix the CSS property prefix, including the trailing colon (e.g. {@code "-fx-fill:"})
+     * @return the property value (trimmed), or {@code null} if the property is not present
+     */
     public static String getExtractedString(String style, String prefix) {
         if (style == null) {
             return null;

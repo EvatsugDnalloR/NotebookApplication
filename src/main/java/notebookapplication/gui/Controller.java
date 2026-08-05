@@ -24,9 +24,9 @@ import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.Spinner;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.SpinnerValueFactory.DoubleSpinnerValueFactory;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.KeyCode;
@@ -849,7 +849,9 @@ public class Controller implements Initializable, PropertyChangeListener {
         int par = contentArea.getCurrentParagraph();
         String style = contentArea.getParagraphs().get(par).getParagraphStyle();
         String alignment = CssHelper.getExtractedString(style, "-fx-text-alignment:");
-        if (alignment == null) alignment = "left";  // default
+        if (alignment == null) {
+            alignment = "left";  // default
+        }
         leftAlign.setSelected("left".equals(alignment));
         centerAlign.setSelected("center".equals(alignment));
         rightAlign.setSelected("right".equals(alignment));
@@ -927,7 +929,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void handleAbout() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v2.7.4");
+        alert.setHeaderText("NotebookApplication v2.7.5");
 
         Label content = new Label("""
                 A OneNote-like notebook application built with
