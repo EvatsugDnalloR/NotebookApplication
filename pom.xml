@@ -38,7 +38,7 @@
       <version>24</version>
     </dependency>
 
-    <!-- RichTextFX and ControlFX libraries -->
+    <!-- RichTextFX libraries -->
     <dependency>
       <groupId>org.fxmisc.richtext</groupId>
       <artifactId>richtextfx</artifactId>

@@ -27,8 +27,7 @@ A OneNote-like notebook application built with JavaFX 24.
 - [x] Wire font size spinner selector
 - [x] Wire text colour picker
 - [ ] Wire bullet points, numbered lists, and checkboxes
-- [ ] Wire text alignment (left, centre, right)
-- [ ] Handle paragraph-level styling (indentation, spacing)
+- [x] Wire text alignment (left, centre, right)
 - [ ] Better UI design (e.g. Material UI styling)
 
 ---

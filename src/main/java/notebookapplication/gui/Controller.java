@@ -20,8 +20,11 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.Spinner;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.SpinnerValueFactory.DoubleSpinnerValueFactory;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
@@ -41,6 +44,7 @@ import notebookapplication.model.EventPropertyNameEnum;
 import notebookapplication.model.NoteFacade;
 import notebookapplication.model.NotePage;
 import org.fxmisc.richtext.InlineCssTextArea;
+import org.fxmisc.richtext.model.TwoDimensional.Bias;
 
 
 /**
@@ -105,6 +109,18 @@ public class Controller implements Initializable, PropertyChangeListener {
 
     /** Text colour picker. */
     @FXML private ColorPicker colorPicker;
+
+    /** Toolbar text-alignment menu button. */
+    @FXML private MenuButton textAlignment;
+
+    /** Left-align radio menu item. */
+    @FXML private RadioMenuItem leftAlign;
+
+    /** Centre-align radio menu item. */
+    @FXML private RadioMenuItem centerAlign;
+
+    /** Right-align radio menu item. */
+    @FXML private RadioMenuItem rightAlign;
 
     /** File → Save. */
     @FXML private MenuItem menuSave;
@@ -200,6 +216,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         setupFontSelector();
         setupFontSizeSpinner();
         setupColorPicker();
+        setupTextAlignment();
 
         if (new File("notebook.dat").exists()) {
             try {
@@ -788,6 +805,54 @@ public class Controller implements Initializable, PropertyChangeListener {
 
         String style = contentArea.getLength() == 0 ? "" : contentArea.getStyleAtPosition(pos);
         btn.setSelected(style != null && style.contains(cssOn));
+    }
+
+    // ---------------------------------------------------------------
+    //  Toolbar: text alignment
+    // ---------------------------------------------------------------
+
+    /** Wires the alignment menu (left/centre/right) to paragraph styles. */
+    private void setupTextAlignment() {
+        ToggleGroup group = new ToggleGroup();
+        leftAlign.setToggleGroup(group);
+        centerAlign.setToggleGroup(group);
+        rightAlign.setToggleGroup(group);
+        leftAlign.setSelected(true);  // default: left alignment
+
+        leftAlign.setOnAction(_ -> applyAlignment("left"));
+        centerAlign.setOnAction(_ -> applyAlignment("center"));
+        rightAlign.setOnAction(_ -> applyAlignment("right"));
+
+        contentArea.selectionProperty().addListener(
+                (_, _, _) -> updateAlignmentState());
+        contentArea.caretPositionProperty().addListener(
+                (_, _, _) -> updateAlignmentState());
+    }
+
+    /** Applies an alignment to the caret paragraph, or to every
+     * paragraph the selection spans. */
+    private void applyAlignment(String alignment) {
+        IndexRange sel = contentArea.getSelection();
+        int startPar = contentArea.offsetToPosition(sel.getStart(), Bias.Forward).getMajor();
+        int endPar = contentArea.offsetToPosition(Math.max(sel.getStart(), sel.getEnd() - 1), Bias.Forward).getMajor();
+        String css = "-fx-text-alignment: " + alignment + ";";
+        for (int i = startPar; i <= endPar; i++) {
+            String style = contentArea.getParagraphs().get(i).getParagraphStyle();
+            String newStyle = CssHelper.replaceProperty(style, "-fx-text-alignment:", css);
+            contentArea.setParagraphStyle(i, newStyle);
+        }
+        contentArea.requestFocus();
+    }
+
+    /** Syncs the radio items with the alignment of the caret paragraph. */
+    private void updateAlignmentState() {
+        int par = contentArea.getCurrentParagraph();
+        String style = contentArea.getParagraphs().get(par).getParagraphStyle();
+        String alignment = CssHelper.getExtractedString(style, "-fx-text-alignment:");
+        if (alignment == null) alignment = "left";  // default
+        leftAlign.setSelected("left".equals(alignment));
+        centerAlign.setSelected("center".equals(alignment));
+        rightAlign.setSelected("right".equals(alignment));
     }
 
     // ---------------------------------------------------------------

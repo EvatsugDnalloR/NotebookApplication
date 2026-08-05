@@ -127,7 +127,7 @@ public final class CssHelper {
         }
     }
 
-    private static String getExtractedString(String style, String prefix) {
+    public static String getExtractedString(String style, String prefix) {
         if (style == null) {
             return null;
         }
