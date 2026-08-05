@@ -829,8 +829,7 @@ public class Controller implements Initializable, PropertyChangeListener {
                 (_, _, _) -> updateAlignmentState());
     }
 
-    /** Applies an alignment to the caret paragraph, or to every
-     * paragraph the selection spans. */
+    /** Applies an alignment to the caret paragraph, or to every paragraph the selection spans. */
     private void applyAlignment(String alignment) {
         IndexRange sel = contentArea.getSelection();
         int startPar = contentArea.offsetToPosition(sel.getStart(), Bias.Forward).getMajor();
