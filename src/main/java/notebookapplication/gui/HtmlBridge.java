@@ -144,12 +144,14 @@ public final class HtmlBridge {
         return sb.toString();
     }
 
-    // --- helpers ---
+    // --- Helpers ---
 
     private static String unwrap(String html) {
         String s = html.trim();
-        if (s.startsWith(WRAPPER_START) && s.endsWith(WRAPPER_END)) {
-            return s.substring(WRAPPER_START.length(), s.length() - WRAPPER_END.length());
+        // Strip nested note-content wrappers
+        while (s.startsWith(WRAPPER_START) && s.endsWith(WRAPPER_END)) {
+            s = s.substring(WRAPPER_START.length(), s.length() - WRAPPER_END.length()).trim();
+            // legacy data may be double-wrapped: toHtml() wrapping an extractHtml() result
         }
         return s;
     }

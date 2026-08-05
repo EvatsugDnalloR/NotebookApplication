@@ -129,6 +129,10 @@ public class NotePage extends NoteSubject implements Serializable {
      */
     public String toHtml() {
         if (htmlBodyContent != null && !htmlBodyContent.isEmpty()) {
+            // htmlBodyContent may already include the wrapper div (saved via HtmlBridge.extractHtml), no double-wrap
+            if (htmlBodyContent.startsWith("<div class='note-content'>")) {
+                return htmlBodyContent;
+            }
             return "<div class='note-content'>" + htmlBodyContent + "</div>";
         }
         return "<div class='note-content'></div>";
