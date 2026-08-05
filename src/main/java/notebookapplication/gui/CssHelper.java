@@ -11,7 +11,7 @@ import javafx.scene.paint.Color;
  * accumulate pending CSS across multiple button presses with no text selected.
  * When the user finally types, the accumulated CSS is applied to the inserted characters.
  */
-public final class CSSHelper {
+public final class CssHelper {
 
     /** Property pairs that conflict (ON / OFF variants). */
     private static final String[][] CONFLICT_PAIRS = {
@@ -103,7 +103,9 @@ public final class CSSHelper {
     /** Extracts the numeric font size from a CSS style string. */
     public static Double parseFontSize(String style) {
         String value = getExtractedString(style, "-fx-font-size:");
-        if (value == null) return null;
+        if (value == null) {
+            return null;
+        }
         value = value.replaceAll("(?i)(pt|px|em)$", "").trim(); // strip a trailing unit (pt, px, em)
         try {
             return Double.parseDouble(value);
@@ -115,7 +117,9 @@ public final class CSSHelper {
     /** Extracts the fill colour from a CSS style string. */
     public static Color parseColor(String style) {
         String value = getExtractedString(style, "-fx-fill:");
-        if (value == null) return null;
+        if (value == null) {
+            return null;
+        }
         try {
             return javafx.scene.paint.Color.web(value);
         } catch (IllegalArgumentException e) {
@@ -124,12 +128,18 @@ public final class CSSHelper {
     }
 
     private static String getExtractedString(String style, String prefix) {
-        if (style == null) return null;
+        if (style == null) {
+            return null;
+        }
         int idx = style.indexOf(prefix);
-        if (idx == -1) return null;
+        if (idx == -1) {
+            return null;
+        }
         int start = idx + prefix.length();
         int end = style.indexOf(";", start);
-        if (end == -1) end = style.length();
+        if (end == -1) {
+            end = style.length();
+        }
         return style.substring(start, end).trim();
     }
 

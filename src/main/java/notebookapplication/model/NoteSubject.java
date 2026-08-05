@@ -1,9 +1,9 @@
 package notebookapplication.model;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.Serial;
+import java.io.Serializable;
 
 /**
  * Abstract base class providing property change support for model classes.

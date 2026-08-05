@@ -14,8 +14,14 @@ public class RemovePageCommand implements Command {
     private final NotePage page;
     private final NoteGroup group;
 
-    public RemovePageCommand(NoteFacade facade, NotePage page,
-                             NoteGroup group) {
+    /**
+     * Creates a command that removes a note page.
+     *
+     * @param facade the facade to operate on
+     * @param page   the page to remove
+     * @param group  the group that contains (or contained) the page
+     */
+    public RemovePageCommand(NoteFacade facade, NotePage page, NoteGroup group) {
         this.facade = facade;
         this.page = page;
         this.group = group;

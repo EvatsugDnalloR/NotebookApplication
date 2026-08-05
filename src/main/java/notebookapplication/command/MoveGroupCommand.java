@@ -13,8 +13,14 @@ public class MoveGroupCommand implements Command {
     private final NoteGroup group;
     private final int direction;
 
-    public MoveGroupCommand(NoteFacade facade, NoteGroup group,
-                            int direction) {
+    /**
+     * Creates a command that moves a note group.
+     *
+     * @param facade    the facade to operate on
+     * @param group     the group to move
+     * @param direction the move direction (-1 = left, +1 = right)
+     */
+    public MoveGroupCommand(NoteFacade facade, NoteGroup group, int direction) {
         this.facade = facade;
         this.group = group;
         this.direction = direction;

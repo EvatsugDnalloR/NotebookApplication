@@ -93,8 +93,7 @@ public class GroupBar extends HBox implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
         EventPropertyNameEnum event = EventPropertyNameEnum.fromPropertyName(evt.getPropertyName());
         if (event == null) {
-            throw new IllegalArgumentException(
-                    "Unknown property: " + evt.getPropertyName());
+            throw new IllegalArgumentException("Unknown property: " + evt.getPropertyName());
         }
 
         switch (event) {
@@ -134,8 +133,7 @@ public class GroupBar extends HBox implements PropertyChangeListener {
     private void refreshGroupOrder() {
         // Remove listeners before clearing to prevent memory leaks
         for (var node : getChildren()) {
-            if (node instanceof ToggleButton button
-                    && button.getUserData() instanceof NoteGroup g) {
+            if (node instanceof ToggleButton button && button.getUserData() instanceof NoteGroup g) {
                 g.removePropertyChangeListener(this);
             }
         }
@@ -169,8 +167,6 @@ public class GroupBar extends HBox implements PropertyChangeListener {
     }
 
     private ContextMenu createGroupContextMenu(NoteGroup group) {
-        ContextMenu menu = new ContextMenu();
-
         MenuItem renameItem = new MenuItem("Rename");
         renameItem.setOnAction(_ -> renameGroup(group));
 
@@ -183,6 +179,7 @@ public class GroupBar extends HBox implements PropertyChangeListener {
         MenuItem deleteItem = new MenuItem("Delete");
         deleteItem.setOnAction(_ -> facade.removeGroup(group));
 
+        ContextMenu menu = new ContextMenu();
         menu.setOnShowing(_ -> {
             int idx = facade.getGroups().indexOf(group);
             moveLeftItem.setDisable(idx <= 0);

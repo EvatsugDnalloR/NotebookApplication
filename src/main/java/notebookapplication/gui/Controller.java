@@ -13,21 +13,34 @@ import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.*;
-import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ColorPicker;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.IndexRange;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory.DoubleSpinnerValueFactory;
-import javafx.scene.input.*;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.fxmisc.richtext.InlineCssTextArea;
 import notebookapplication.command.UndoRedo;
 import notebookapplication.model.EventPropertyNameEnum;
 import notebookapplication.model.NoteFacade;
 import notebookapplication.model.NotePage;
+import org.fxmisc.richtext.InlineCssTextArea;
 
 
 /**
@@ -205,44 +218,44 @@ public class Controller implements Initializable, PropertyChangeListener {
 
             contentArea.getScene().addEventFilter(
                     KeyEvent.KEY_PRESSED, event -> {
-                if (event.isControlDown() && !event.isShiftDown()) {
-                    KeyCode code = event.getCode();
-                    if (code == KeyCode.B) {
-                        bold.fire();
-                        event.consume();
-                    } else if (code == KeyCode.I) {
-                        italic.fire();
-                        event.consume();
-                    } else if (code == KeyCode.U) {
-                        underline.fire();
-                        event.consume();
-                    }
-                }
-            });
+                        if (event.isControlDown() && !event.isShiftDown()) {
+                            KeyCode code = event.getCode();
+                            if (code == KeyCode.B) {
+                                bold.fire();
+                                event.consume();
+                            } else if (code == KeyCode.I) {
+                                italic.fire();
+                                event.consume();
+                            } else if (code == KeyCode.U) {
+                                underline.fire();
+                                event.consume();
+                            }
+                        }
+                    });
 
             contentArea.richChanges()
                     .filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
                     .subscribe(ch -> {
-                if (pendingCss != null && !pendingCss.isEmpty()
-                        && ch.getInserted().length() - ch.getRemoved().length() > 0) {
-                    int start = ch.getPosition();
-                    int insertedLen = ch.getInserted().length() - ch.getRemoved().length();
-                    String current = contentArea.getStyleAtPosition(start);
-                    // Strip base properties that conflict or overlap
-                    // with pendingCss before merging. Font-size is a
-                    // replacement property — strip the base's old value.
-                    String base = CSSHelper.stripConflicting(current, pendingCss);
-                    if (pendingCss.contains("-fx-font-size:")) {
-                        base = CSSHelper.replaceProperty(base, "-fx-font-size:", "");
-                    }
-                    if (pendingCss.contains("-fx-fill:")) {
-                        base = CSSHelper.replaceProperty(base, "-fx-fill:", "");
-                    }
-                    String merged = CSSHelper.mergeCss(base, pendingCss);
-                    contentArea.setStyle(start, start + insertedLen, merged);
-                }
-                pendingCss = null;
-            });
+                        if (pendingCss != null && !pendingCss.isEmpty()
+                                && ch.getInserted().length() - ch.getRemoved().length() > 0) {
+                            int start = ch.getPosition();
+                            int insertedLen = ch.getInserted().length() - ch.getRemoved().length();
+                            String current = contentArea.getStyleAtPosition(start);
+                            // Strip base properties that conflict or overlap
+                            // with pendingCss before merging. Font-size is a
+                            // replacement property — strip the base's old value.
+                            String base = CssHelper.stripConflicting(current, pendingCss);
+                            if (pendingCss.contains("-fx-font-size:")) {
+                                base = CssHelper.replaceProperty(base, "-fx-font-size:", "");
+                            }
+                            if (pendingCss.contains("-fx-fill:")) {
+                                base = CssHelper.replaceProperty(base, "-fx-fill:", "");
+                            }
+                            String merged = CssHelper.mergeCss(base, pendingCss);
+                            contentArea.setStyle(start, start + insertedLen, merged);
+                        }
+                        pendingCss = null;
+                    });
         });
     }
 
@@ -384,8 +397,10 @@ public class Controller implements Initializable, PropertyChangeListener {
         updatePasteState();
         contentArea.focusedProperty().addListener(
                 (_, _, focused) -> {
-            if (focused) updatePasteState();
-        });
+                    if (focused) {
+                        updatePasteState();
+                    }
+                });
     }
 
     private void updatePasteState() {
@@ -436,10 +451,14 @@ public class Controller implements Initializable, PropertyChangeListener {
 
         fontSelector.setOnAction(_ -> {
             String label = fontSelector.getValue();
-            if (label == null) return;
+            if (label == null) {
+                return;
+            }
             String systemFont = getSystemFontName(label);
             applyPageFont(systemFont);
-            if (currentPage != null) currentPage.setFontFamily(systemFont);
+            if (currentPage != null) {
+                currentPage.setFontFamily(systemFont);
+            }
         });
     }
 
@@ -454,12 +473,14 @@ public class Controller implements Initializable, PropertyChangeListener {
         if (current == null || current.isBlank()) {
             current = "-fx-font-size: " + DEFAULT_FONT_SIZE + "pt;";
         }
-        String newStyle = CSSHelper.replaceProperty(current,
+        String newStyle = CssHelper.replaceProperty(current,
                 "-fx-font-family:",
                 "-fx-font-family: " + systemFont + ";");
         contentArea.setStyle(newStyle);
         String displayLabel = PREFERRED_FONTS.get(systemFont);
-        if (displayLabel != null) fontSelector.getSelectionModel().select(displayLabel);
+        if (displayLabel != null) {
+            fontSelector.getSelectionModel().select(displayLabel);
+        }
     }
 
     /** Looks up the system font name for a display label. */
@@ -483,7 +504,9 @@ public class Controller implements Initializable, PropertyChangeListener {
 
         // User changed the size (arrows, typing + Enter): apply it.
         factory.valueProperty().addListener((_, _, newVal) -> {
-            if (suppressSpinnerUpdate || newVal == null) return;
+            if (suppressSpinnerUpdate || newVal == null) {
+                return;
+            }
             applyFontSize(newVal);
         });
 
@@ -523,12 +546,14 @@ public class Controller implements Initializable, PropertyChangeListener {
         IndexRange sel = contentArea.getSelection();
         if (sel.getLength() > 0) {
             String current = getCurrentStyle(sel);
-            String newStyle = CSSHelper.replaceProperty(current, "-fx-font-size:", css);
+            String newStyle = CssHelper.replaceProperty(current, "-fx-font-size:", css);
             contentArea.setStyle(sel.getStart(), sel.getEnd(), newStyle);
             contentArea.getUndoManager().preventMerge();
         } else {
-            if (pendingCss == null) pendingCss = "";
-            pendingCss = CSSHelper.replaceProperty(pendingCss, "-fx-font-size:", css);
+            if (pendingCss == null) {
+                pendingCss = "";
+            }
+            pendingCss = CssHelper.replaceProperty(pendingCss, "-fx-font-size:", css);
         }
         contentArea.requestFocus();
     }
@@ -538,14 +563,18 @@ public class Controller implements Initializable, PropertyChangeListener {
         String current = "";
         if (contentArea.getLength() > 0 && pos >= 0) {
             current = contentArea.getStyleAtPosition(pos);
-            if (current == null) current = "";
+            if (current == null) {
+                current = "";
+            }
         }
         return current;
     }
 
     /** Updates the spinner to reflect the size at the selection / caret. */
     private void updateFontSizeState() {
-        if (pendingCss != null) return;  // user has a pending choice
+        if (pendingCss != null) {
+            return;  // user has a pending choice
+        }
 
         IndexRange sel = contentArea.getSelection();
         Double size;
@@ -559,8 +588,10 @@ public class Controller implements Initializable, PropertyChangeListener {
             } else {
                 int pos = contentArea.getCaretPosition();
                 pos = pos > 0 ? pos - 1 : 0;
-                size = CSSHelper.parseFontSize(contentArea.getStyleAtPosition(pos));
-                if (size == null) size = DEFAULT_FONT_SIZE;
+                size = CssHelper.parseFontSize(contentArea.getStyleAtPosition(pos));
+                if (size == null) {
+                    size = DEFAULT_FONT_SIZE;
+                }
             }
         }
 
@@ -586,8 +617,10 @@ public class Controller implements Initializable, PropertyChangeListener {
         }
         Double common = null;
         for (int p = sel.getStart(); p < sel.getEnd(); p++) {
-            Double size = CSSHelper.parseFontSize(contentArea.getStyleAtPosition(p));
-            if (size == null) size = DEFAULT_FONT_SIZE;
+            Double size = CssHelper.parseFontSize(contentArea.getStyleAtPosition(p));
+            if (size == null) {
+                size = DEFAULT_FONT_SIZE;
+            }
             if (common == null) {
                 common = size;
             } else if (Math.abs(common - size) > 1e-9) {
@@ -606,8 +639,9 @@ public class Controller implements Initializable, PropertyChangeListener {
 
         // User changed the colour: apply it.
         colorPicker.valueProperty().addListener((_, _, newVal) -> {
-            if (suppressColorUpdate || newVal == null) return;
-            if (SENTINEL_COLOR.equals(newVal)) return;  // ignore placeholder
+            if (suppressColorUpdate || newVal == null || SENTINEL_COLOR.equals(newVal)) {   // ignore placeholder
+                return;
+            }
             applyColor(newVal);
         });
 
@@ -621,23 +655,27 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** Applies a colour to the selection, or accumulates it for the
      * next typed characters when nothing is selected. */
     private void applyColor(Color color) {
-        String css = "-fx-fill: " + CSSHelper.colorToHex(color) + ";";
+        String css = "-fx-fill: " + CssHelper.colorToHex(color) + ";";
         IndexRange sel = contentArea.getSelection();
         if (sel.getLength() > 0) {
             String current = getCurrentStyle(sel);
-            String newStyle = CSSHelper.replaceProperty(current, "-fx-fill:", css);
+            String newStyle = CssHelper.replaceProperty(current, "-fx-fill:", css);
             contentArea.setStyle(sel.getStart(), sel.getEnd(), newStyle);
             contentArea.getUndoManager().preventMerge();
         } else {
-            if (pendingCss == null) pendingCss = "";
-            pendingCss = CSSHelper.replaceProperty(pendingCss, "-fx-fill:", css);
+            if (pendingCss == null) {
+                pendingCss = "";
+            }
+            pendingCss = CssHelper.replaceProperty(pendingCss, "-fx-fill:", css);
         }
         contentArea.requestFocus();
     }
 
     /** Updates the picker to reflect the colour at the selection / caret. */
     private void updateColorState() {
-        if (pendingCss != null) return;  // user has a pending choice
+        if (pendingCss != null) {
+            return;  // user has a pending choice
+        }
 
         IndexRange sel = contentArea.getSelection();
         Color colour;
@@ -656,8 +694,10 @@ public class Controller implements Initializable, PropertyChangeListener {
             } else {
                 int pos = contentArea.getCaretPosition();
                 pos = pos > 0 ? pos - 1 : 0;
-                colour = CSSHelper.parseColor(contentArea.getStyleAtPosition(pos));
-                if (colour == null) colour = DEFAULT_COLOR;
+                colour = CssHelper.parseColor(contentArea.getStyleAtPosition(pos));
+                if (colour == null) {
+                    colour = DEFAULT_COLOR;
+                }
             }
         }
 
@@ -679,8 +719,10 @@ public class Controller implements Initializable, PropertyChangeListener {
         }
         Color common = null;
         for (int p = sel.getStart(); p < sel.getEnd(); p++) {
-            Color colour = CSSHelper.parseColor(contentArea.getStyleAtPosition(p));
-            if (colour == null) colour = DEFAULT_COLOR;
+            Color colour = CssHelper.parseColor(contentArea.getStyleAtPosition(p));
+            if (colour == null) {
+                colour = DEFAULT_COLOR;
+            }
             if (common == null) {
                 common = colour;
             } else if (!common.equals(colour)) {
@@ -713,14 +755,16 @@ public class Controller implements Initializable, PropertyChangeListener {
             String remove = btn.isSelected() ? cssOff : cssOn;
             if (sel.getLength() > 0) {
                 String current = getCurrentStyle(sel);
-                String newStyle = CSSHelper.ensureProperty(current, add);
-                newStyle = CSSHelper.stripProperty(newStyle, remove);
+                String newStyle = CssHelper.ensureProperty(current, add);
+                newStyle = CssHelper.stripProperty(newStyle, remove);
                 contentArea.setStyle(sel.getStart(), sel.getEnd(), newStyle);
                 contentArea.getUndoManager().preventMerge();
             } else {
-                if (pendingCss == null) pendingCss = "";
-                pendingCss = CSSHelper.ensureProperty(pendingCss, add);
-                pendingCss = CSSHelper.stripProperty(pendingCss, remove);
+                if (pendingCss == null) {
+                    pendingCss = "";
+                }
+                pendingCss = CssHelper.ensureProperty(pendingCss, add);
+                pendingCss = CssHelper.stripProperty(pendingCss, remove);
                 btn.setSelected(pendingCss.contains(cssOn));
             }
             contentArea.requestFocus();
@@ -816,7 +860,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     }
 
     private void handleAbout() {
-        Alert alert = new Alert(AlertType.INFORMATION);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
         alert.setHeaderText("NotebookApplication v2.6.4");
 
@@ -845,7 +889,9 @@ public class Controller implements Initializable, PropertyChangeListener {
             try {
                 java.awt.Desktop.getDesktop().browse(
                         new java.net.URI("https://github.com/EvatsugDnalloR/NotebookApplication"));
-            } catch (Exception ignored) { }  // browser not available, silently ignore
+            } catch (Exception e) {
+                LOGGER.log(Level.INFO, "Error ignored when initialising Github link", e);
+            }  // browser not available, silently ignore
         });
 
         alert.getDialogPane().setContent(new VBox(content, repoLink));

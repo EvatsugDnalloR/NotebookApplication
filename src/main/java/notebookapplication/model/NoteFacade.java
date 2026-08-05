@@ -13,11 +13,11 @@ import java.util.UUID;
 
 import notebookapplication.command.AddGroupCommand;
 import notebookapplication.command.AddPageCommand;
+import notebookapplication.command.MoveGroupCommand;
+import notebookapplication.command.MovePageCommand;
 import notebookapplication.command.RemoveGroupCommand;
 import notebookapplication.command.RemovePageCommand;
 import notebookapplication.command.RenameGroupCommand;
-import notebookapplication.command.MoveGroupCommand;
-import notebookapplication.command.MovePageCommand;
 import notebookapplication.command.RenamePageCommand;
 import notebookapplication.command.UndoRedo;
 
@@ -248,9 +248,13 @@ public class NoteFacade extends NoteSubject {
      */
     public void executeMoveGroup(NoteGroup group, int direction) {
         var idx = groups.indexOf(group);
-        if (idx < 0) return;
+        if (idx < 0) {
+            return;
+        }
         int newIdx = idx + direction;
-        if (newIdx < 0 || newIdx >= groups.size()) return;
+        if (newIdx < 0 || newIdx >= groups.size()) {
+            return;
+        }
         groups.remove(idx);
         groups.add(newIdx, group);
         support.firePropertyChange(

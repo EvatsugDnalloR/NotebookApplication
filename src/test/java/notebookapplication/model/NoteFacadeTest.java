@@ -200,12 +200,12 @@ class NoteFacadeTest {
     @Test
     void renameGroup_IsUndoable() {
         NoteGroup group = facade.getCurrentGroup();
-        String original = group.getGroupName();
 
         facade.renameGroup(group, "Changed");
         assertEquals("Changed", group.getGroupName());
 
         undoRedo.undo();
+        String original = group.getGroupName();
         assertEquals(original, group.getGroupName());
     }
 
@@ -219,12 +219,12 @@ class NoteFacadeTest {
     @Test
     void renamePage_IsUndoable() {
         NotePage page = facade.getCurrentPage();
-        String original = page.getPageName();
 
         facade.renamePage(page, "Draft");
         assertEquals("Draft", page.getPageName());
 
         undoRedo.undo();
+        String original = page.getPageName();
         assertEquals(original, page.getPageName());
     }
 

@@ -31,6 +31,11 @@ public class PageBar extends VBox implements PropertyChangeListener {
 
     private NoteGroup currentGroup;
 
+    /**
+     * Creates a page bar bound to the given facade.
+     *
+     * @param facade the facade providing notebook model operations
+     */
     public PageBar(NoteFacade facade) {
         this.facade = facade;
         this.currentGroup = facade.getCurrentGroup();
@@ -112,8 +117,7 @@ public class PageBar extends VBox implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
         EventPropertyNameEnum event = EventPropertyNameEnum.fromPropertyName(evt.getPropertyName());
         if (event == null) {
-            throw new IllegalArgumentException(
-                    "Unknown property: " + evt.getPropertyName());
+            throw new IllegalArgumentException("Unknown property: " + evt.getPropertyName());
         }
 
         switch (event) {
@@ -178,8 +182,7 @@ public class PageBar extends VBox implements PropertyChangeListener {
 
     private void updatePageName(NotePage page) {
         for (var node : getChildren()) {
-            if (node instanceof ToggleButton button
-                    && button.getUserData() == page) {
+            if (node instanceof ToggleButton button && button.getUserData() == page) {
                 button.setText(page.getPageName());
                 break;
             }
@@ -187,8 +190,6 @@ public class PageBar extends VBox implements PropertyChangeListener {
     }
 
     private ContextMenu createPageContextMenu(NotePage page) {
-        ContextMenu menu = new ContextMenu();
-
         MenuItem renameItem = new MenuItem("Rename");
         renameItem.setOnAction(_ -> renamePage(page));
 
@@ -201,6 +202,7 @@ public class PageBar extends VBox implements PropertyChangeListener {
         MenuItem deleteItem = new MenuItem("Delete");
         deleteItem.setOnAction(_ -> facade.removePage(page));
 
+        ContextMenu menu = new ContextMenu();
         menu.setOnShowing(_ -> {
             int idx = currentGroup.getPages().indexOf(page);
             moveUpItem.setDisable(idx <= 0);
@@ -208,20 +210,17 @@ public class PageBar extends VBox implements PropertyChangeListener {
             deleteItem.setDisable(currentGroup.getPages().size() <= 1);
         });
 
-        menu.getItems().addAll(renameItem, moveUpItem, moveDownItem,
-                deleteItem);
+        menu.getItems().addAll(renameItem, moveUpItem, moveDownItem, deleteItem);
         return menu;
     }
 
     private void renamePage(NotePage page) {
-        TextInputDialog dialog =
-                new TextInputDialog(page.getPageName());
+        TextInputDialog dialog = new TextInputDialog(page.getPageName());
         dialog.setTitle("Rename Page");
         dialog.setHeaderText("Enter new page title:");
         dialog.setContentText("Title:");
 
         Optional<String> result = dialog.showAndWait();
-        result.ifPresent(
-                name -> facade.renamePage(page, name));
+        result.ifPresent(name -> facade.renamePage(page, name));
     }
 }

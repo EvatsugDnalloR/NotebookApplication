@@ -13,8 +13,14 @@ public class MovePageCommand implements Command {
     private final NotePage page;
     private final int direction;
 
-    public MovePageCommand(NoteFacade facade, NotePage page,
-                           int direction) {
+    /**
+     * Creates a command that moves a note page.
+     *
+     * @param facade    the facade to operate on
+     * @param page      the page to move
+     * @param direction the move direction (-1 = up, +1 = down)
+     */
+    public MovePageCommand(NoteFacade facade, NotePage page, int direction) {
         this.facade = facade;
         this.page = page;
         this.direction = direction;

@@ -99,9 +99,13 @@ public class NoteGroup extends NoteSubject implements Serializable {
      */
     public void swapPageOrder(NotePage page, int direction) {
         int idx = pages.indexOf(page);
-        if (idx < 0) return;
+        if (idx < 0) {
+            return;
+        }
         int newIdx = idx + direction;
-        if (newIdx < 0 || newIdx >= pages.size()) return;
+        if (newIdx < 0 || newIdx >= pages.size()) {
+            return;
+        }
         pages.remove(idx);
         pages.add(newIdx, page);
         support.firePropertyChange(
