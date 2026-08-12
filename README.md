@@ -10,25 +10,45 @@ A OneNote-like notebook application built with JavaFX 24.
 
 ### Done
 
-- [x] OneNote-style note groups and pages (add, remove, rename, navigate)
+**Organisation**
+
+- [x] OneNote-style note groups and pages (add, remove, rename, navigate, reorder)
+- [x] Undo / Redo for group and page operations (Command design pattern) with shortcuts Ctrl+Shift+Z/Ctrl+Shift+Y
+
+**Rich text editing**
+
+- [x] Bold, italic, underline with toolbar toggles and Ctrl+B/I/U shortcuts
+- [x] Cut / copy / paste toolbar buttons
+- [x] Font family combo box selector
+- [x] Font size spinner selector
+- [x] Text colour picker
+- [x] Text alignment (left, centre, right)
+- [x] Bullet points, numbered lists, and clickable checkboxes (text grouping)
+- [x] Text-level undo/redo (Ctrl+Z / Ctrl+Y) — migrated from `HTMLEditor` to `RichTextFX`
+
+**Persistence**
+
 - [x] Manual save and load to local `.dat` file (Java serialization)
 - [x] Auto-save on exit, autoload on startup, plus manual save/load with shortcuts Ctrl+S/Ctrl+L
-- [x] Undo / Redo for group and page operations (Command design pattern) with shortcuts Ctrl+Shift+Z/Ctrl+Shift+Y
+- [x] Import / Export notebook data from / to other directories
+
+**Quality**
+
 - [x] Unit tests for the model and command layer
 - [x] Better "About" dialogue content (author, repository link, licence)
 
 ### Roadmap
 
-- [x] Import / Export notebook data from / to other directories
-- [x] Text-level undo/redo — migrate from `HTMLEditor` to `RichTextFX`
-- [x] Wire text editing toolbar: bold, italic, underline
-- [x] Wire cut / copy / paste toolbar buttons
-- [x] Wire font family combo box selector
-- [x] Wire font size spinner selector
-- [x] Wire text colour picker
-- [x] Wire bullet points, numbered lists, and checkboxes
-- [x] Wire text alignment (left, centre, right)
-- [ ] Better UI design (e.g. Material UI styling)
+- [ ] Unit tests for classes in the `gui` package
+- [ ] Installer for the app
+- [ ] Subgroups under text grouping (e.g. hollow bullet points as a subgroup of bullet points)
+- [ ] Font applies only to selected texts and paragraphs instead of globally
+- [ ] In-page search (Ctrl+F) and global search across groups/pages
+- [ ] Material UI refactoring (planned for v3.0.0)
+- [ ] Dark mode / theme switching
+- [ ] Export to PDF and Markdown
+- [ ] Multiple notebooks (open, create, and switch between several `.dat` files)
+- [ ] Password-protected / encrypted notebooks
 
 ---
 
