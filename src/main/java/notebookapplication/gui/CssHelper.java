@@ -1,7 +1,9 @@
 package notebookapplication.gui;
 
 
+import javafx.scene.control.IndexRange;
 import javafx.scene.paint.Color;
+import org.fxmisc.richtext.InlineCssTextArea;
 
 /**
  * Static utility methods for manipulating inline CSS style strings used
@@ -161,5 +163,18 @@ public final class CssHelper {
         int g = (int) Math.round(color.getGreen() * 255);
         int b = (int) Math.round(color.getBlue() * 255);
         return String.format("#%02X%02X%02X", r, g, b);
+    }
+
+    /** Reads the character style at the middle of the selection. */
+    public static String getCurrentStyle(IndexRange sel, InlineCssTextArea contentArea) {
+        int pos = Math.min(sel.getStart() + sel.getLength() / 2, contentArea.getLength() - 1);
+        String current = "";
+        if (contentArea.getLength() > 0 && pos >= 0) {
+            current = contentArea.getStyleAtPosition(pos);
+            if (current == null) {
+                current = "";
+            }
+        }
+        return current;
     }
 }

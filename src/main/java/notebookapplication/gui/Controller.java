@@ -1,11 +1,12 @@
 package notebookapplication.gui;
 
+import java.awt.Desktop;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
-import java.util.LinkedHashMap;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,29 +15,22 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
-import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.Spinner;
-import javafx.scene.control.SpinnerValueFactory.DoubleSpinnerValueFactory;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
-import javafx.scene.input.Clipboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import notebookapplication.command.UndoRedo;
@@ -44,18 +38,31 @@ import notebookapplication.model.EventPropertyNameEnum;
 import notebookapplication.model.NoteFacade;
 import notebookapplication.model.NotePage;
 import org.fxmisc.richtext.InlineCssTextArea;
-import org.fxmisc.richtext.model.TwoDimensional.Bias;
 
 
 /**
- * Main controller class that coordinates between the model and view components.
+ * Main controller that coordinates the model and the view.
  *
- * <p>Handles UI initialisation, button actions, and content synchronisation.
+ * <p>Acts as the assembly layer: it owns the {@code @FXML} components,
+ * the notebook facade and the page lifecycle, and delegates the toolbar
+ * feature wiring to three helpers:
  *
- * <p>Implements both Initializable and PropertyChangeListener interfaces.
+ * <ul>
+ *   <li>{@link TextFormatting} — bold/italic/underline,
+ *       cut/copy/paste, text-level undo/redo</li>
+ *   <li>{@link FontStyle} — font family, font size, colour</li>
+ *   <li>{@link ParagraphStyle} — text alignment, bullet /
+ *       numbered / checkbox lists</li>
+ * </ul>
+ *
+ * <p>Implements both Initializable and PropertyChangeListener.
  */
 public class Controller implements Initializable, PropertyChangeListener {
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
+
+    // ---------------------------------------------------------------
+    //  FXML UI components
+    // ---------------------------------------------------------------
 
     /**
      * The main content area where users can view and edit the text of the current note page.
@@ -76,6 +83,10 @@ public class Controller implements Initializable, PropertyChangeListener {
 
     /** Button for adding a new note page. */
     @FXML private Button addPageBtn;
+
+    // ---------------------------------------------------------------
+    //  FXML text formatting toolbar
+    // ---------------------------------------------------------------
 
     /** Toolbar undo button for text-level undo. */
     @FXML private Button textUndo;
@@ -101,6 +112,10 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** Toolbar underline toggle button. */
     @FXML private ToggleButton underline;
 
+    // ---------------------------------------------------------------
+    //  FXML font/colour toolbar
+    // ---------------------------------------------------------------
+
     /** Font selector combobox. */
     @FXML private ComboBox<String> fontSelector;
 
@@ -109,6 +124,20 @@ public class Controller implements Initializable, PropertyChangeListener {
 
     /** Text colour picker. */
     @FXML private ColorPicker colorPicker;
+
+
+    // ---------------------------------------------------------------
+    //  FXML paragraph toolbar
+    // ---------------------------------------------------------------
+
+    /** Left-align radio menu item. */
+    @FXML private RadioMenuItem leftAlign;
+
+    /** Centre-align radio menu item. */
+    @FXML private RadioMenuItem centerAlign;
+
+    /** Right-align radio menu item. */
+    @FXML private RadioMenuItem rightAlign;
 
     /** Toolbar bullet-points toggle button. */
     @FXML private ToggleButton bulletPoints;
@@ -119,14 +148,9 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** Toolbar checkbox toggle button. */
     @FXML private ToggleButton checkBoxes;
 
-    /** Left-align radio menu item. */
-    @FXML private RadioMenuItem leftAlign;
-
-    /** Centre-align radio menu item. */
-    @FXML private RadioMenuItem centerAlign;
-
-    /** Right-align radio menu item. */
-    @FXML private RadioMenuItem rightAlign;
+    // ---------------------------------------------------------------
+    //  FXML menu components
+    // ---------------------------------------------------------------
 
     /** File → Save. */
     @FXML private MenuItem menuSave;
@@ -152,47 +176,39 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** Edit → Redo (app-level). */
     @FXML private MenuItem menuRedo;
 
+    // ---------------------------------------------------------------
+    //  Internal app states components
+    // ---------------------------------------------------------------
+
     /** The app-level undo/redo manager shared with the facade. */
     private final UndoRedo undoRedo = new UndoRedo();
 
     /** The main facade that provides access to all notebook model operations. */
     private final NoteFacade facade = new NoteFacade(undoRedo);
 
-    /** The current page being edited in the content area. */
+    /** The page currently being edited in the content area. */
     private NotePage currentPage;
 
     /**
      * CSS properties to apply on the next text insertion.
-     * Accumulated as the user toggles formatting buttons (bold/italic/underline)
-     * or changes font size with no text selected.
+     * Accumulated as the user toggles formatting (bold/italic/underline, font size, colour) with no text selected.
+     * Shared with the helpers.
      */
     private String pendingCss;
 
-    /** Default font family applied to new pages. */
-    private static final String DEFAULT_FONT = "Arial";
+    /** Character-level formatting toolbar wiring. */
+    private TextFormatting textFormatting;
 
-    /** Default font size (pt) for new content. */
-    private static final double DEFAULT_FONT_SIZE = 12.0;
+    /** Font / colour toolbar wiring. */
+    private FontStyle fontStyle;
 
-    /** Default text colour for new content. */
-    private static final Color DEFAULT_COLOR = Color.BLACK;
+    /** Paragraph-level toolbar wiring. */
+    private ParagraphStyle paragraphStyle;
 
-    /**
-     * Placeholder shown in the picker while a mixed-colour selection is active.
-     * Any colour the user picks while this is displayed changes the value, so it is always applied.
-     */
-    private static final Color SENTINEL_COLOR = Color.TRANSPARENT;
-
-    /** Guards against programmatic spinner updates re-entering the value-change listener. */
-    private boolean suppressSpinnerUpdate;
-
-    /** Guards against programmatic colour-picker updates re-entering the value-change listener. */
-    private boolean suppressColorUpdate;
-
-    // ---------------------------------------------------------------
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Notebook model + UI scaffolding
         GroupBar groupBar = new GroupBar(facade);
         PageBar pageBar = new PageBar(facade);
         groupBarContainer.getChildren().addFirst(groupBar);
@@ -202,29 +218,35 @@ public class Controller implements Initializable, PropertyChangeListener {
         currentPage = facade.getCurrentPage();
         undoRedo.setOnChanged(this::updateUndoRedoMenuState);
 
-        // Default base style: Arial at 12pt. loadPageContent() may override the family with the page's saved font.
-        contentArea.setStyle("-fx-font-family: " + DEFAULT_FONT + "; -fx-font-size: " + DEFAULT_FONT_SIZE + "pt;");
+        // loadPageContent() may override the family with the page's saved font.
+        contentArea.setStyle("-fx-font-family: "
+                + FontStyle.DEFAULT_FONT    // Default base style: Arial at 12pt.
+                + "; -fx-font-size: "
+                + FontStyle.DEFAULT_FONT_SIZE + "pt;");
+
+        // Wire toolbar feature helpers
+        textFormatting = new TextFormatting(contentArea,
+                textUndo, textRedo, cut, copy, paste,
+                bold, italic, underline,
+                () -> pendingCss, css -> pendingCss = css,
+                () -> currentPage);
+        fontStyle = new FontStyle(contentArea,
+                fontSelector, fontSizeSpinner, colorPicker,
+                () -> pendingCss, css -> pendingCss = css,
+                () -> currentPage);
+        paragraphStyle = new ParagraphStyle(contentArea,
+                leftAlign, centerAlign, rightAlign,
+                bulletPoints, numberListing, checkBoxes);
+
+        textFormatting.setupAll();
+        fontStyle.setupAll();
+        paragraphStyle.setupAll();
 
         loadPageContent();
         setupButtons();
         setupMenuActions();
-        setupTextUndoRedo();
-        setupCutCopyPaste();
-        setupToggleFormatting(bold,
-                "-fx-font-weight: bold;", "-fx-font-weight: normal;",
-                "Bold", KeyCode.B);
-        setupToggleFormatting(italic,
-                "-fx-font-style: italic;", "-fx-font-style: normal;",
-                "Italic", KeyCode.I);
-        setupToggleFormatting(underline,
-                "-fx-underline: true;", "-fx-underline: false;",
-                "Underline", KeyCode.U);
-        setupFontSelector();
-        setupFontSizeSpinner();
-        setupColorPicker();
-        setupTextAlignment();
-        setupListFormatting();
 
+        // Autoload existing notebook on startup
         if (new File("notebook.dat").exists()) {
             try {
                 facade.loadNotebook("notebook.dat");
@@ -242,7 +264,8 @@ public class Controller implements Initializable, PropertyChangeListener {
 
             contentArea.getScene().addEventFilter(
                     KeyEvent.KEY_PRESSED, event -> {
-                        if (event.isControlDown() && !event.isShiftDown()) {
+                        if (event.isControlDown()
+                                && !event.isShiftDown()) {
                             KeyCode code = event.getCode();
                             if (code == KeyCode.B) {
                                 bold.fire();
@@ -254,22 +277,23 @@ public class Controller implements Initializable, PropertyChangeListener {
                                 underline.fire();
                                 event.consume();
                             } else if (code == KeyCode.Z) {
-                                safeTextUndo();
+                                textFormatting.safeTextUndo();
                                 event.consume();
                             } else if (code == KeyCode.Y) {
-                                safeTextRedo();
+                                textFormatting.safeTextRedo();
                                 event.consume();
                             }
                         }
 
-                        // Backspace on an empty first paragraph that carries a list style: clear the grouping
+                        // Backspace on an empty first paragraph that carries a list style: clear the grouping.
                         if (event.getCode() == KeyCode.BACK_SPACE) {
-                            if (clearFirstParagraphListStyleOnBackspace()) {
+                            if (paragraphStyle.clearFirstParagraphListStyleOnBackspace()) {
                                 event.consume();
                             }
                         }
                     });
 
+            // Apply accumulated pending CSS when text is inserted
             contentArea.richChanges()
                     .filter(ch -> !ch.getInserted().equals(ch.getRemoved()))
                     .subscribe(ch -> {
@@ -278,9 +302,7 @@ public class Controller implements Initializable, PropertyChangeListener {
                             int start = ch.getPosition();
                             int insertedLen = ch.getInserted().length() - ch.getRemoved().length();
                             String current = contentArea.getStyleAtPosition(start);
-                            // Strip base properties that conflict or overlap
-                            // with pendingCss before merging. Font-size is a
-                            // replacement property — strip the base's old value.
+                            // Strip base properties that conflict or overlap with pendingCss before merging.
                             String base = CssHelper.stripConflicting(current, pendingCss);
                             if (pendingCss.contains("-fx-font-size:")) {
                                 base = CssHelper.replaceProperty(base, "-fx-font-size:", "");
@@ -290,14 +312,17 @@ public class Controller implements Initializable, PropertyChangeListener {
                             }
                             String merged = CssHelper.mergeCss(base, pendingCss);
                             contentArea.setStyle(start, start + insertedLen, merged);
-                            // Keep the style change out of the undo merge
-                            // so it never merges with adjacent edits.
+                            // Keep the style change out of the undo merge so it never merges with adjacent edits.
                             contentArea.getUndoManager().preventMerge();
                         }
                         pendingCss = null;
                     });
         });
     }
+
+    // ---------------------------------------------------------------
+    //  Button / menu wiring
+    // ---------------------------------------------------------------
 
     private void setupButtons() {
         addGroupBtn.setOnAction(_ -> facade.createNewGroup());
@@ -329,11 +354,16 @@ public class Controller implements Initializable, PropertyChangeListener {
         updateUndoRedoMenuState();
     }
 
+    // ---------------------------------------------------------------
+    //  Property change handling
+    // ---------------------------------------------------------------
+
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         EventPropertyNameEnum event = EventPropertyNameEnum.fromPropertyName(evt.getPropertyName());
         if (event == null) {
-            throw new IllegalArgumentException("Unknown property: " + evt.getPropertyName());
+            throw new IllegalArgumentException(
+                    "Unknown property: " + evt.getPropertyName());
         }
 
         switch (event) {
@@ -369,14 +399,16 @@ public class Controller implements Initializable, PropertyChangeListener {
         if (currentPage != null) {
             String html = currentPage.toHtml();
             HtmlBridge.populateArea(contentArea, html);
-            String font = currentPage.getFontFamily();  // restore the page-level font
-            applyPageFont(font != null ? font : DEFAULT_FONT);
+            // Restore the page-level font and update the selector
+            String font = currentPage.getFontFamily();
+            fontStyle.applyPageFont(
+                    font != null ? font : FontStyle.DEFAULT_FONT);
             contentArea.getUndoManager().forgetHistory();
         }
     }
 
     // ---------------------------------------------------------------
-    //  App-level undo/redo
+    //  App-level undo / redo
     // ---------------------------------------------------------------
 
     private void handleUndo() {
@@ -396,655 +428,6 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void updateUndoRedoMenuState() {
         menuUndo.setDisable(!undoRedo.canUndo());
         menuRedo.setDisable(!undoRedo.canRedo());
-    }
-
-    // ---------------------------------------------------------------
-    //  Toolbar: text undo / redo
-    // ---------------------------------------------------------------
-
-    /** Undo with a safety net for RichTextFX undo-stack inconsistencies. */
-    private void safeTextUndo() {
-        try {
-            contentArea.getUndoManager().undo();
-        } catch (IllegalArgumentException e) {
-            LOGGER.log(Level.WARNING, "Text undo history inconsistent — resetting", e);
-            recoverAfterUndoError();
-        }
-    }
-
-    /** Redo with a safety net for RichTextFX undo-stack inconsistencies. */
-    private void safeTextRedo() {
-        try {
-            contentArea.getUndoManager().redo();
-        } catch (IllegalArgumentException e) {
-            LOGGER.log(Level.WARNING, "Text redo history inconsistent — resetting", e);
-            recoverAfterUndoError();
-        }
-    }
-
-    /** Clears the broken undo history and reloads the page content. */
-    private void recoverAfterUndoError() {
-        contentArea.getUndoManager().forgetHistory();
-        if (currentPage != null) {
-            HtmlBridge.populateArea(contentArea, currentPage.toHtml());
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void setupTextUndoRedo() {
-        textUndo.setTooltip(new Tooltip("Undo (Ctrl+Z)"));
-        textRedo.setTooltip(new Tooltip("Redo (Ctrl+Y)"));
-
-        textUndo.setOnAction(_ -> safeTextUndo());
-        textRedo.setOnAction(_ -> safeTextRedo());
-
-        contentArea.getUndoManager().undoAvailableProperty()
-                .addListener((_, _, available) ->
-                        textUndo.setDisable(!(boolean) available));
-        contentArea.getUndoManager().redoAvailableProperty()
-                .addListener((_, _, available) ->
-                        textRedo.setDisable(!(boolean) available));
-
-        textUndo.setDisable(!contentArea.getUndoManager().isUndoAvailable());
-        textRedo.setDisable(!contentArea.getUndoManager().isRedoAvailable());
-    }
-
-    // ---------------------------------------------------------------
-    //  Toolbar: cut / copy / paste
-    // ---------------------------------------------------------------
-
-    private void setupCutCopyPaste() {
-        cut.setTooltip(new Tooltip("Cut (Ctrl+X)"));
-        copy.setTooltip(new Tooltip("Copy (Ctrl+C)"));
-        paste.setTooltip(new Tooltip("Paste (Ctrl+V)"));
-
-        cut.setOnAction(_ -> contentArea.cut());
-        copy.setOnAction(_ -> contentArea.copy());
-        paste.setOnAction(_ -> contentArea.paste());
-
-        updatePasteState();
-        contentArea.focusedProperty().addListener(
-                (_, _, focused) -> {
-                    if (focused) {
-                        updatePasteState();
-                    }
-                });
-    }
-
-    private void updatePasteState() {
-        paste.setDisable(!Clipboard.getSystemClipboard().hasString());
-    }
-
-    // ---------------------------------------------------------------
-    //  Toolbar: font family selector
-    // ---------------------------------------------------------------
-
-    private static final LinkedHashMap<String, String> PREFERRED_FONTS = new LinkedHashMap<>();
-
-    static {
-        PREFERRED_FONTS.put("Arial", "Arial");
-        PREFERRED_FONTS.put("Calibri", "Calibri");
-        PREFERRED_FONTS.put("Cambria", "Cambria");
-        PREFERRED_FONTS.put("Cascadia Code", "Cascadia Code");
-        PREFERRED_FONTS.put("Century Gothic", "Century Gothic");
-        PREFERRED_FONTS.put("Consolas", "Consolas");
-        PREFERRED_FONTS.put("Georgia", "Georgia");
-        PREFERRED_FONTS.put("JetBrainsMono NF", "JetBrainsMono NF");
-        PREFERRED_FONTS.put("Segoe UI", "Segoe UI");
-        PREFERRED_FONTS.put("Verdana", "Verdana");
-        PREFERRED_FONTS.put("Microsoft YaHei", "Microsoft YaHei (微软雅黑)");
-        PREFERRED_FONTS.put("Microsoft JhengHei", "Microsoft JhengHei (微軟正黑體)");
-        PREFERRED_FONTS.put("SimSun", "SimSun (宋体)");
-        PREFERRED_FONTS.put("SimHei", "SimHei (黑体)");
-        PREFERRED_FONTS.put("FangSong", "FangSong (仿宋)");
-        PREFERRED_FONTS.put("KaiTi", "KaiTi (楷体)");
-        PREFERRED_FONTS.put("DengXian", "DengXian (等线)");
-        PREFERRED_FONTS.put("NSimSun", "NSimSun (新宋体)");
-        PREFERRED_FONTS.put("Yu Gothic", "Yu Gothic (游ゴシック)");
-        PREFERRED_FONTS.put("华文细黑", "华文细黑 (STHeiti Light)");
-    }
-
-    /** Populates the font selector and wires page-level font selection. */
-    private void setupFontSelector() {
-        fontSelector.getItems().clear();
-        for (String family : Font.getFamilies()) {
-            for (var entry : PREFERRED_FONTS.entrySet()) {
-                if (family.equalsIgnoreCase(entry.getKey())) {
-                    fontSelector.getItems().add(entry.getValue());
-                    break;
-                }
-            }
-        }
-        fontSelector.getSelectionModel().select(PREFERRED_FONTS.get(DEFAULT_FONT));
-
-        fontSelector.setOnAction(_ -> {
-            String label = fontSelector.getValue();
-            if (label == null) {
-                return;
-            }
-            String systemFont = getSystemFontName(label);
-            applyPageFont(systemFont);
-            if (currentPage != null) {
-                currentPage.setFontFamily(systemFont);
-            }
-        });
-    }
-
-    /**
-     * Applies a font to the entire content area and syncs the ComboBox without firing onAction.
-     * Preserves the font-size property.
-     *
-     * @param systemFont  the font to apply
-     */
-    private void applyPageFont(String systemFont) {
-        String current = contentArea.getStyle();
-        if (current == null || current.isBlank()) {
-            current = "-fx-font-size: " + DEFAULT_FONT_SIZE + "pt;";
-        }
-        String newStyle = CssHelper.replaceProperty(current,
-                "-fx-font-family:",
-                "-fx-font-family: " + systemFont + ";");
-        contentArea.setStyle(newStyle);
-        String displayLabel = PREFERRED_FONTS.get(systemFont);
-        if (displayLabel != null) {
-            fontSelector.getSelectionModel().select(displayLabel);
-        }
-    }
-
-    /** Looks up the system font name for a display label. */
-    private String getSystemFontName(String displayLabel) {
-        for (var entry : PREFERRED_FONTS.entrySet()) {
-            if (entry.getValue().equals(displayLabel)) {
-                return entry.getKey();
-            }
-        }
-        return displayLabel;
-    }
-
-    // ---------------------------------------------------------------
-    //  Toolbar: font size selector
-    // ---------------------------------------------------------------
-
-    private void setupFontSizeSpinner() {
-        DoubleSpinnerValueFactory factory = setupDoubleSpinnerValueFactory();
-        fontSizeSpinner.setValueFactory(factory);
-        fontSizeSpinner.setEditable(true);
-
-        // User changed the size (arrows, typing + Enter): apply it.
-        factory.valueProperty().addListener((_, _, newVal) -> {
-            if (suppressSpinnerUpdate || newVal == null) {
-                return;
-            }
-            applyFontSize(newVal);
-        });
-
-        // Keep the spinner in sync with the caret / selection.
-        contentArea.selectionProperty().addListener(
-                (_, _, _) -> updateFontSizeState());
-        contentArea.caretPositionProperty().addListener(
-                (_, _, _) -> updateFontSizeState());
-    }
-
-    private DoubleSpinnerValueFactory setupDoubleSpinnerValueFactory() {
-        DoubleSpinnerValueFactory factory = new DoubleSpinnerValueFactory(
-                8.0, 72.0, DEFAULT_FONT_SIZE, 0.5);
-
-        // Fault-tolerant conversion: unparseable input (e.g. "abc") falls back to the current value
-        factory.setConverter(new javafx.util.StringConverter<>() {
-            @Override
-            public String toString(Double value) {
-                return value == null ? "" : String.valueOf(value);
-            }
-
-            @Override
-            public Double fromString(String text) {
-                try {
-                    return Double.parseDouble(text.trim());
-                } catch (NumberFormatException e) {
-                    return factory.getValue();
-                }
-            }
-        });
-        return factory;
-    }
-
-    /** Applies a font size to the selection or accumulates it for the next typed characters when nothing is selected.*/
-    private void applyFontSize(double size) {
-        String css = "-fx-font-size: " + size + "pt;";
-        IndexRange sel = contentArea.getSelection();
-        if (sel.getLength() > 0) {
-            String current = getCurrentStyle(sel);
-            String newStyle = CssHelper.replaceProperty(current, "-fx-font-size:", css);
-            contentArea.setStyle(sel.getStart(), sel.getEnd(), newStyle);
-            contentArea.getUndoManager().preventMerge();
-        } else {
-            if (pendingCss == null) {
-                pendingCss = "";
-            }
-            pendingCss = CssHelper.replaceProperty(pendingCss, "-fx-font-size:", css);
-        }
-        contentArea.requestFocus();
-    }
-
-    private String getCurrentStyle(IndexRange sel) {
-        int pos = Math.min(sel.getStart() + sel.getLength() / 2, contentArea.getLength() - 1);
-        String current = "";
-        if (contentArea.getLength() > 0 && pos >= 0) {
-            current = contentArea.getStyleAtPosition(pos);
-            if (current == null) {
-                current = "";
-            }
-        }
-        return current;
-    }
-
-    /** Updates the spinner to reflect the size at the selection / caret. */
-    private void updateFontSizeState() {
-        if (pendingCss != null) {
-            return;  // user has a pending choice
-        }
-
-        IndexRange sel = contentArea.getSelection();
-        Double size;
-        if (sel.getLength() > 0) {
-            // Selection: show the uniform size, or empty if mixed.
-            size = selectionUniformFontSize(sel);
-        } else {
-            // Caret: show the size at the caret position.
-            if (contentArea.getLength() == 0) {
-                size = DEFAULT_FONT_SIZE;
-            } else {
-                int pos = contentArea.getCaretPosition();
-                pos = pos > 0 ? pos - 1 : 0;
-                size = CssHelper.parseFontSize(contentArea.getStyleAtPosition(pos));
-                if (size == null) {
-                    size = DEFAULT_FONT_SIZE;
-                }
-            }
-        }
-
-        if (size == null) {
-            fontSizeSpinner.getEditor().setText("");
-        } else {
-            suppressSpinnerUpdate = true;
-            try {
-                fontSizeSpinner.getValueFactory().setValue(size);
-            } finally {
-                suppressSpinnerUpdate = false;
-            }
-        }
-    }
-
-    /**
-     * Returns the font size if every character in the selection shares it; returns {@code null} if sizes are mixed.
-     * Characters without an explicit size are treated as the default.
-     */
-    private Double selectionUniformFontSize(IndexRange sel) {
-        if (sel.getLength() == 0 || contentArea.getLength() == 0) {
-            return null;
-        }
-        Double common = null;
-        for (int p = sel.getStart(); p < sel.getEnd(); p++) {
-            Double size = CssHelper.parseFontSize(contentArea.getStyleAtPosition(p));
-            if (size == null) {
-                size = DEFAULT_FONT_SIZE;
-            }
-            if (common == null) {
-                common = size;
-            } else if (Math.abs(common - size) > 1e-9) {
-                return null;  // mixed sizes
-            }
-        }
-        return common;
-    }
-
-    // ---------------------------------------------------------------
-    //  Toolbar: colour picker
-    // ---------------------------------------------------------------
-
-    private void setupColorPicker() {
-        colorPicker.setValue(DEFAULT_COLOR);
-
-        // User changed the colour: apply it.
-        colorPicker.valueProperty().addListener((_, _, newVal) -> {
-            if (suppressColorUpdate || newVal == null || SENTINEL_COLOR.equals(newVal)) {   // ignore placeholder
-                return;
-            }
-            applyColor(newVal);
-        });
-
-        // Keep the picker in sync with the caret / selection.
-        contentArea.selectionProperty().addListener(
-                (_, _, _) -> updateColorState());
-        contentArea.caretPositionProperty().addListener(
-                (_, _, _) -> updateColorState());
-    }
-
-    /** Applies a colour to the selection, or accumulates it for the
-     * next typed characters when nothing is selected. */
-    private void applyColor(Color color) {
-        String css = "-fx-fill: " + CssHelper.colorToHex(color) + ";";
-        IndexRange sel = contentArea.getSelection();
-        if (sel.getLength() > 0) {
-            String current = getCurrentStyle(sel);
-            String newStyle = CssHelper.replaceProperty(current, "-fx-fill:", css);
-            contentArea.setStyle(sel.getStart(), sel.getEnd(), newStyle);
-            contentArea.getUndoManager().preventMerge();
-        } else {
-            if (pendingCss == null) {
-                pendingCss = "";
-            }
-            pendingCss = CssHelper.replaceProperty(pendingCss, "-fx-fill:", css);
-        }
-        contentArea.requestFocus();
-    }
-
-    /** Updates the picker to reflect the colour at the selection / caret. */
-    private void updateColorState() {
-        if (pendingCss != null) {
-            return;  // user has a pending choice
-        }
-
-        IndexRange sel = contentArea.getSelection();
-        Color colour;
-        if (sel.getLength() > 0) {
-            // Selection: show the colour only if uniform, otherwise leave the picker untouched.
-            colour = selectionUniformColor(sel);
-            if (colour == null) {
-                // For mixed colours, show the transparent placeholder in colour picker
-                showSentinelColor();
-                return;
-            }
-        } else {
-            // Caret: show the colour at the caret position.
-            if (contentArea.getLength() == 0) {
-                colour = DEFAULT_COLOR;
-            } else {
-                int pos = contentArea.getCaretPosition();
-                pos = pos > 0 ? pos - 1 : 0;
-                colour = CssHelper.parseColor(contentArea.getStyleAtPosition(pos));
-                if (colour == null) {
-                    colour = DEFAULT_COLOR;
-                }
-            }
-        }
-
-        suppressColorUpdate = true;
-        try {
-            colorPicker.setValue(colour);
-        } finally {
-            suppressColorUpdate = false;
-        }
-    }
-
-    /**
-     * Returns the colour if every character in the selection shares it; returns {@code null} if colours are mixed.
-     * Characters without an explicit colour are treated as the default.
-     */
-    private Color selectionUniformColor(IndexRange sel) {
-        if (sel.getLength() == 0 || contentArea.getLength() == 0) {
-            return null;
-        }
-        Color common = null;
-        for (int p = sel.getStart(); p < sel.getEnd(); p++) {
-            Color colour = CssHelper.parseColor(contentArea.getStyleAtPosition(p));
-            if (colour == null) {
-                colour = DEFAULT_COLOR;
-            }
-            if (common == null) {
-                common = colour;
-            } else if (!common.equals(colour)) {
-                return null;  // mixed colours
-            }
-        }
-        return common;
-    }
-
-    /** Shows the transparent placeholder in the picker. */
-    private void showSentinelColor() {
-        suppressColorUpdate = true;
-        try {
-            colorPicker.setValue(SENTINEL_COLOR);
-        } finally {
-            suppressColorUpdate = false;
-        }
-    }
-
-    // ---------------------------------------------------------------
-    //  Toolbar: bold / italic / underline
-    // ---------------------------------------------------------------
-
-    private void setupToggleFormatting(ToggleButton btn, String cssOn, String cssOff, String label, KeyCode hotkey) {
-        btn.setTooltip(new Tooltip(label + " (Ctrl+" + hotkey.getName() + ")"));
-
-        btn.setOnAction(_ -> {
-            IndexRange sel = contentArea.getSelection();
-            String add = btn.isSelected() ? cssOn : cssOff;
-            String remove = btn.isSelected() ? cssOff : cssOn;
-            if (sel.getLength() > 0) {
-                String current = getCurrentStyle(sel);
-                String newStyle = CssHelper.ensureProperty(current, add);
-                newStyle = CssHelper.stripProperty(newStyle, remove);
-                contentArea.setStyle(sel.getStart(), sel.getEnd(), newStyle);
-                contentArea.getUndoManager().preventMerge();
-            } else {
-                if (pendingCss == null) {
-                    pendingCss = "";
-                }
-                pendingCss = CssHelper.ensureProperty(pendingCss, add);
-                pendingCss = CssHelper.stripProperty(pendingCss, remove);
-                btn.setSelected(pendingCss.contains(cssOn));
-            }
-            contentArea.requestFocus();
-        });
-
-        contentArea.selectionProperty().addListener(
-                (_, _, _) -> updateToggleState(btn, cssOn));
-        contentArea.caretPositionProperty().addListener(
-                (_, _, _) -> updateToggleState(btn, cssOn));
-    }
-
-    private void updateToggleState(ToggleButton btn, String cssOn) {
-        if (pendingCss != null) {
-            btn.setSelected(pendingCss.contains(cssOn));
-            return;
-        }
-
-        IndexRange sel = contentArea.getSelection();
-        int pos = sel.getLength() > 0 ? sel.getStart() : contentArea.getCaretPosition();
-        pos = pos > 0 ? pos - 1 : 0;
-
-        String style = contentArea.getLength() == 0 ? "" : contentArea.getStyleAtPosition(pos);
-        btn.setSelected(style != null && style.contains(cssOn));
-    }
-
-    // ---------------------------------------------------------------
-    //  Toolbar: bullet points, numbered lists, checkboxes
-    // ---------------------------------------------------------------
-
-    /**
-     * If the caret is in an empty first paragraph that has a list style, clears the style.
-     * The first paragraph cannot be merged upward with Backspace,
-     * so without this the grouping marker would be stuck forever.
-     *
-     * @return true if the style was cleared (event should be consumed)
-     */
-    private boolean clearFirstParagraphListStyleOnBackspace() {
-        if (contentArea.getCurrentParagraph() != 0) {
-            return false;
-        }
-        if (contentArea.getParagraphs().getFirst().length() != 0) {
-            return false;
-        }
-        if (contentArea.getCaretPosition() != 0) {
-            return false;
-        }
-        String style = contentArea.getParagraphs().getFirst().getParagraphStyle();
-        if (CssHelper.getExtractedString(style, "-fx-list-style:") == null) {
-            return false;
-        }
-        applyListStyle(null);
-        return true;
-    }
-
-    /** Wires bullet/numbered/checkbox toggles and the paragraph graphic. */
-    private void setupListFormatting() {
-        ToggleGroup group = new ToggleGroup();
-        bulletPoints.setToggleGroup(group);
-        numberListing.setToggleGroup(group);
-        checkBoxes.setToggleGroup(group);
-        bulletPoints.setTooltip(new Tooltip("Bullet points"));
-        numberListing.setTooltip(new Tooltip("Numbered list"));
-        checkBoxes.setTooltip(new Tooltip("Checkboxes"));
-
-        bulletPoints.setOnAction(_ -> applyListStyle(bulletPoints.isSelected() ? "bullet" : null));
-        numberListing.setOnAction(_ -> applyListStyle(numberListing.isSelected() ? "decimal" : null));
-        checkBoxes.setOnAction(_ -> applyListStyle(checkBoxes.isSelected() ? "checkbox" : null));
-
-        contentArea.selectionProperty().addListener(
-                (_, _, _) -> updateListState());
-        contentArea.caretPositionProperty().addListener(
-                (_, _, _) -> updateListState());
-
-        contentArea.setParagraphGraphicFactory(this::createParagraphGraphic);
-    }
-
-    /** Applies a list style to the caret paragraph / selected paragraphs; {@code null} clears the list style. */
-    private void applyListStyle(String listStyle) {
-        IndexRange sel = contentArea.getSelection();
-        int startPar = contentArea.offsetToPosition(sel.getStart(), Bias.Backward).getMajor();
-        int endPar = sel.getLength() > 0
-                ? contentArea.offsetToPosition(sel.getEnd() - 1, Bias.Forward).getMajor()
-                : startPar;
-        String css = listStyle == null ? "" : "-fx-list-style: " + listStyle + ";";
-        for (int i = startPar; i <= endPar; i++) {
-            String style = contentArea.getParagraphs().get(i).getParagraphStyle();
-            String newStyle = CssHelper.replaceProperty(style, "-fx-list-style:", css);
-            contentArea.setParagraphStyle(i, newStyle);
-            contentArea.getUndoManager().preventMerge();
-        }
-        contentArea.requestFocus();
-    }
-
-    /** Syncs the list toggle buttons with the caret paragraph. */
-    private void updateListState() {
-        int par = contentArea.getCurrentParagraph();
-        if (par < 0 || par >= contentArea.getParagraphs().size()) {
-            return;
-        }
-        String style = contentArea.getParagraphs().get(par).getParagraphStyle();
-        String ls = CssHelper.getExtractedString(style, "-fx-list-style:");
-        bulletPoints.setSelected("bullet".equals(ls));
-        numberListing.setSelected("decimal".equals(ls));
-        checkBoxes.setSelected("checkbox".equals(ls));
-    }
-
-    /** Builds the leading graphic for a paragraph: bullet marker, auto-numbered label, or a clickable checkbox. */
-    private javafx.scene.Node createParagraphGraphic(int parIndex) {
-        if (parIndex < 0 || parIndex >= contentArea.getParagraphs().size()) {
-            return null;
-        }
-        String style = contentArea.getParagraphs().get(parIndex).getParagraphStyle();
-        String listStyle = CssHelper.getExtractedString(style, "-fx-list-style:");
-        if (listStyle == null) {
-            return null;  // plain paragraph — no graphic
-        }
-        switch (listStyle) {
-            case "bullet": {
-                Label bullet = new Label("•  ");
-                bullet.setTranslateY(2);
-                return bullet;
-            }
-            case "decimal": {
-                Label number = new Label(countDecimalBefore(parIndex) + ".  ");
-                number.setTranslateY(2);
-                return number;
-            }
-            case "checkbox": {
-                CheckBox cb = new CheckBox();
-                String checked = CssHelper.getExtractedString(style, "-fx-checked:");
-                cb.setSelected("true".equals(checked));
-                cb.setOnAction(_ -> {
-                    String current = contentArea.getParagraphs().get(parIndex).getParagraphStyle();
-                    String newStyle = CssHelper.replaceProperty(
-                            current == null ? "" : current, "-fx-checked:",
-                            "-fx-checked: " + cb.isSelected() + ";");
-                    contentArea.setParagraphStyle(parIndex, newStyle);
-                    contentArea.getUndoManager().preventMerge();
-                });
-                return cb;
-            }
-            default:
-                return null;
-        }
-    }
-
-    /** Counts the sequence number of a numbered paragraph.
-     * Increments through preceding consecutive decimal paragraphs,
-     * resets after any non-decimal (or plain) paragraph.
-     */
-    private int countDecimalBefore(int parIndex) {
-        int count = 1;
-        for (int i = 0; i < parIndex; i++) {
-            String style = contentArea.getParagraphs().get(i).getParagraphStyle();
-            String ls = CssHelper.getExtractedString(style, "-fx-list-style:");
-            if ("decimal".equals(ls)) {
-                count++;
-            } else if (ls != null) {
-                count = 1;  // other list type breaks the sequence
-            }
-        }
-        return count;
-    }
-
-
-    // ---------------------------------------------------------------
-    //  Toolbar: text alignment
-    // ---------------------------------------------------------------
-
-    /** Wires the alignment menu (left/centre/right) to paragraph styles. */
-    private void setupTextAlignment() {
-        ToggleGroup group = new ToggleGroup();
-        leftAlign.setToggleGroup(group);
-        centerAlign.setToggleGroup(group);
-        rightAlign.setToggleGroup(group);
-        leftAlign.setSelected(true);  // default: left alignment
-
-        leftAlign.setOnAction(_ -> applyAlignment("left"));
-        centerAlign.setOnAction(_ -> applyAlignment("center"));
-        rightAlign.setOnAction(_ -> applyAlignment("right"));
-
-        contentArea.selectionProperty().addListener(
-                (_, _, _) -> updateAlignmentState());
-        contentArea.caretPositionProperty().addListener(
-                (_, _, _) -> updateAlignmentState());
-    }
-
-    /** Applies an alignment to the caret paragraph, or to every paragraph the selection spans. */
-    private void applyAlignment(String alignment) {
-        IndexRange sel = contentArea.getSelection();
-        int startPar = contentArea.offsetToPosition(sel.getStart(), Bias.Forward).getMajor();
-        int endPar = contentArea.offsetToPosition(Math.max(sel.getStart(), sel.getEnd() - 1), Bias.Forward).getMajor();
-        String css = "-fx-text-alignment: " + alignment + ";";
-        for (int i = startPar; i <= endPar; i++) {
-            String style = contentArea.getParagraphs().get(i).getParagraphStyle();
-            String newStyle = CssHelper.replaceProperty(style, "-fx-text-alignment:", css);
-            contentArea.setParagraphStyle(i, newStyle);
-        }
-        contentArea.requestFocus();
-    }
-
-    /** Syncs the radio items with the alignment of the caret paragraph. */
-    private void updateAlignmentState() {
-        int par = contentArea.getCurrentParagraph();
-        String style = contentArea.getParagraphs().get(par).getParagraphStyle();
-        String alignment = CssHelper.getExtractedString(style, "-fx-text-alignment:");
-        if (alignment == null) {
-            alignment = "left";  // default
-        }
-        leftAlign.setSelected("left".equals(alignment));
-        centerAlign.setSelected("center".equals(alignment));
-        rightAlign.setSelected("right".equals(alignment));
     }
 
     // ---------------------------------------------------------------
@@ -1117,7 +500,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     }
 
     private void handleAbout() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
         alert.setHeaderText("NotebookApplication v2.8.4");
 
@@ -1144,11 +527,10 @@ public class Controller implements Initializable, PropertyChangeListener {
         Hyperlink repoLink = new Hyperlink("github.com/EvatsugDnalloR/NotebookApplication");
         repoLink.setOnAction(_ -> {
             try {
-                java.awt.Desktop.getDesktop().browse(
-                        new java.net.URI("https://github.com/EvatsugDnalloR/NotebookApplication"));
+                Desktop.getDesktop().browse(new URI("https://github.com/EvatsugDnalloR/NotebookApplication"));
             } catch (Exception e) {
                 LOGGER.log(Level.INFO, "Error ignored when initialising Github link", e);
-            }  // browser not available, silently ignore
+            }   // Browser not available — silently ignore
         });
 
         alert.getDialogPane().setContent(new VBox(content, repoLink));
