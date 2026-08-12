@@ -254,6 +254,12 @@ public class Controller implements Initializable, PropertyChangeListener {
                             } else if (code == KeyCode.U) {
                                 underline.fire();
                                 event.consume();
+                            } else if (code == KeyCode.Z) {
+                                safeTextUndo();
+                                event.consume();
+                            } else if (code == KeyCode.Y) {
+                                safeTextRedo();
+                                event.consume();
                             }
                         }
 
@@ -285,6 +291,9 @@ public class Controller implements Initializable, PropertyChangeListener {
                             }
                             String merged = CssHelper.mergeCss(base, pendingCss);
                             contentArea.setStyle(start, start + insertedLen, merged);
+                            // Keep the style change out of the undo merge
+                            // so it never merges with adjacent edits.
+                            contentArea.getUndoManager().preventMerge();
                         }
                         pendingCss = null;
                     });
@@ -394,13 +403,41 @@ public class Controller implements Initializable, PropertyChangeListener {
     //  Toolbar: text undo / redo
     // ---------------------------------------------------------------
 
+    /** Undo with a safety net for RichTextFX undo-stack inconsistencies. */
+    private void safeTextUndo() {
+        try {
+            contentArea.getUndoManager().undo();
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Text undo history inconsistent — resetting", e);
+            recoverAfterUndoError();
+        }
+    }
+
+    /** Redo with a safety net for RichTextFX undo-stack inconsistencies. */
+    private void safeTextRedo() {
+        try {
+            contentArea.getUndoManager().redo();
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Text redo history inconsistent — resetting", e);
+            recoverAfterUndoError();
+        }
+    }
+
+    /** Clears the broken undo history and reloads the page content. */
+    private void recoverAfterUndoError() {
+        contentArea.getUndoManager().forgetHistory();
+        if (currentPage != null) {
+            HtmlBridge.populateArea(contentArea, currentPage.toHtml());
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private void setupTextUndoRedo() {
         textUndo.setTooltip(new Tooltip("Undo (Ctrl+Z)"));
         textRedo.setTooltip(new Tooltip("Redo (Ctrl+Y)"));
 
-        textUndo.setOnAction(_ -> contentArea.getUndoManager().undo());
-        textRedo.setOnAction(_ -> contentArea.getUndoManager().redo());
+        textUndo.setOnAction(_ -> safeTextUndo());
+        textRedo.setOnAction(_ -> safeTextRedo());
 
         contentArea.getUndoManager().undoAvailableProperty()
                 .addListener((_, _, available) ->
@@ -1083,7 +1120,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void handleAbout() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v2.8.3");
+        alert.setHeaderText("NotebookApplication v2.8.4");
 
         Label content = new Label("""
                 A OneNote-like notebook application built with
