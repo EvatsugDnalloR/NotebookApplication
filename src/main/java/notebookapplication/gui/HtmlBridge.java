@@ -42,6 +42,7 @@ public final class HtmlBridge {
      */
     public static void populateArea(InlineCssTextArea area, String html) {
         area.clear();
+        area.setParagraphStyle(0, area.getInitialParagraphStyle());   // reset style first after clear()
         if (html == null || html.isBlank()) {
             return;
         }

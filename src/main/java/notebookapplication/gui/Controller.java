@@ -256,6 +256,13 @@ public class Controller implements Initializable, PropertyChangeListener {
                                 event.consume();
                             }
                         }
+
+                        // Backspace on an empty first paragraph that carries a list style: clear the grouping
+                        if (event.getCode() == KeyCode.BACK_SPACE) {
+                            if (clearFirstParagraphListStyleOnBackspace()) {
+                                event.consume();
+                            }
+                        }
                     });
 
             contentArea.richChanges()
@@ -819,6 +826,31 @@ public class Controller implements Initializable, PropertyChangeListener {
     //  Toolbar: bullet points, numbered lists, checkboxes
     // ---------------------------------------------------------------
 
+    /**
+     * If the caret is in an empty first paragraph that has a list style, clears the style.
+     * The first paragraph cannot be merged upward with Backspace,
+     * so without this the grouping marker would be stuck forever.
+     *
+     * @return true if the style was cleared (event should be consumed)
+     */
+    private boolean clearFirstParagraphListStyleOnBackspace() {
+        if (contentArea.getCurrentParagraph() != 0) {
+            return false;
+        }
+        if (contentArea.getParagraphs().getFirst().length() != 0) {
+            return false;
+        }
+        if (contentArea.getCaretPosition() != 0) {
+            return false;
+        }
+        String style = contentArea.getParagraphs().getFirst().getParagraphStyle();
+        if (CssHelper.getExtractedString(style, "-fx-list-style:") == null) {
+            return false;
+        }
+        applyListStyle(null);
+        return true;
+    }
+
     /** Wires bullet/numbered/checkbox toggles and the paragraph graphic. */
     private void setupListFormatting() {
         ToggleGroup group = new ToggleGroup();
@@ -829,16 +861,9 @@ public class Controller implements Initializable, PropertyChangeListener {
         numberListing.setTooltip(new Tooltip("Numbered list"));
         checkBoxes.setTooltip(new Tooltip("Checkboxes"));
 
-        bulletPoints.setOnAction(_ -> applyListStyle("bullet"));
-        numberListing.setOnAction(_ -> applyListStyle("decimal"));
-        checkBoxes.setOnAction(_ -> applyListStyle("checkbox"));
-
-        // Clicking the already-selected toggle deselects it in the group
-        group.selectedToggleProperty().addListener((_, _, newSel) -> {
-            if (newSel == null) {
-                applyListStyle(null);
-            }
-        });
+        bulletPoints.setOnAction(_ -> applyListStyle(bulletPoints.isSelected() ? "bullet" : null));
+        numberListing.setOnAction(_ -> applyListStyle(numberListing.isSelected() ? "decimal" : null));
+        checkBoxes.setOnAction(_ -> applyListStyle(checkBoxes.isSelected() ? "checkbox" : null));
 
         contentArea.selectionProperty().addListener(
                 (_, _, _) -> updateListState());
@@ -1058,7 +1083,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void handleAbout() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v2.8.0");
+        alert.setHeaderText("NotebookApplication v2.8.3");
 
         Label content = new Label("""
                 A OneNote-like notebook application built with
