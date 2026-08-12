@@ -14,13 +14,14 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.Spinner;
@@ -110,8 +111,14 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** Text colour picker. */
     @FXML private ColorPicker colorPicker;
 
-    /** Toolbar text-alignment menu button. */
-    @FXML private MenuButton textAlignment;
+    /** Toolbar bullet-points toggle button. */
+    @FXML private ToggleButton bulletPoints;
+
+    /** Toolbar numbered-list toggle button. */
+    @FXML private ToggleButton numberListing;
+
+    /** Toolbar checkbox toggle button. */
+    @FXML private ToggleButton checkBoxes;
 
     /** Left-align radio menu item. */
     @FXML private RadioMenuItem leftAlign;
@@ -217,6 +224,7 @@ public class Controller implements Initializable, PropertyChangeListener {
         setupFontSizeSpinner();
         setupColorPicker();
         setupTextAlignment();
+        setupListFormatting();
 
         if (new File("notebook.dat").exists()) {
             try {
@@ -808,6 +816,128 @@ public class Controller implements Initializable, PropertyChangeListener {
     }
 
     // ---------------------------------------------------------------
+    //  Toolbar: bullet points, numbered lists, checkboxes
+    // ---------------------------------------------------------------
+
+    /** Wires bullet/numbered/checkbox toggles and the paragraph graphic. */
+    private void setupListFormatting() {
+        ToggleGroup group = new ToggleGroup();
+        bulletPoints.setToggleGroup(group);
+        numberListing.setToggleGroup(group);
+        checkBoxes.setToggleGroup(group);
+        bulletPoints.setTooltip(new Tooltip("Bullet points"));
+        numberListing.setTooltip(new Tooltip("Numbered list"));
+        checkBoxes.setTooltip(new Tooltip("Checkboxes"));
+
+        bulletPoints.setOnAction(_ -> applyListStyle("bullet"));
+        numberListing.setOnAction(_ -> applyListStyle("decimal"));
+        checkBoxes.setOnAction(_ -> applyListStyle("checkbox"));
+
+        // Clicking the already-selected toggle deselects it in the group
+        group.selectedToggleProperty().addListener((_, _, newSel) -> {
+            if (newSel == null) {
+                applyListStyle(null);
+            }
+        });
+
+        contentArea.selectionProperty().addListener(
+                (_, _, _) -> updateListState());
+        contentArea.caretPositionProperty().addListener(
+                (_, _, _) -> updateListState());
+
+        contentArea.setParagraphGraphicFactory(this::createParagraphGraphic);
+    }
+
+    /** Applies a list style to the caret paragraph / selected paragraphs; {@code null} clears the list style. */
+    private void applyListStyle(String listStyle) {
+        IndexRange sel = contentArea.getSelection();
+        int startPar = contentArea.offsetToPosition(sel.getStart(), Bias.Backward).getMajor();
+        int endPar = sel.getLength() > 0
+                ? contentArea.offsetToPosition(sel.getEnd() - 1, Bias.Forward).getMajor()
+                : startPar;
+        String css = listStyle == null ? "" : "-fx-list-style: " + listStyle + ";";
+        for (int i = startPar; i <= endPar; i++) {
+            String style = contentArea.getParagraphs().get(i).getParagraphStyle();
+            String newStyle = CssHelper.replaceProperty(style, "-fx-list-style:", css);
+            contentArea.setParagraphStyle(i, newStyle);
+            contentArea.getUndoManager().preventMerge();
+        }
+        contentArea.requestFocus();
+    }
+
+    /** Syncs the list toggle buttons with the caret paragraph. */
+    private void updateListState() {
+        int par = contentArea.getCurrentParagraph();
+        if (par < 0 || par >= contentArea.getParagraphs().size()) {
+            return;
+        }
+        String style = contentArea.getParagraphs().get(par).getParagraphStyle();
+        String ls = CssHelper.getExtractedString(style, "-fx-list-style:");
+        bulletPoints.setSelected("bullet".equals(ls));
+        numberListing.setSelected("decimal".equals(ls));
+        checkBoxes.setSelected("checkbox".equals(ls));
+    }
+
+    /** Builds the leading graphic for a paragraph: bullet marker, auto-numbered label, or a clickable checkbox. */
+    private javafx.scene.Node createParagraphGraphic(int parIndex) {
+        if (parIndex < 0 || parIndex >= contentArea.getParagraphs().size()) {
+            return null;
+        }
+        String style = contentArea.getParagraphs().get(parIndex).getParagraphStyle();
+        String listStyle = CssHelper.getExtractedString(style, "-fx-list-style:");
+        if (listStyle == null) {
+            return null;  // plain paragraph — no graphic
+        }
+        switch (listStyle) {
+            case "bullet": {
+                Label bullet = new Label("•  ");
+                bullet.setTranslateY(2);
+                return bullet;
+            }
+            case "decimal": {
+                Label number = new Label(countDecimalBefore(parIndex) + ".  ");
+                number.setTranslateY(2);
+                return number;
+            }
+            case "checkbox": {
+                CheckBox cb = new CheckBox();
+                String checked = CssHelper.getExtractedString(style, "-fx-checked:");
+                cb.setSelected("true".equals(checked));
+                cb.setOnAction(_ -> {
+                    String current = contentArea.getParagraphs().get(parIndex).getParagraphStyle();
+                    String newStyle = CssHelper.replaceProperty(
+                            current == null ? "" : current, "-fx-checked:",
+                            "-fx-checked: " + cb.isSelected() + ";");
+                    contentArea.setParagraphStyle(parIndex, newStyle);
+                    contentArea.getUndoManager().preventMerge();
+                });
+                return cb;
+            }
+            default:
+                return null;
+        }
+    }
+
+    /** Counts the sequence number of a numbered paragraph.
+     * Increments through preceding consecutive decimal paragraphs,
+     * resets after any non-decimal (or plain) paragraph.
+     */
+    private int countDecimalBefore(int parIndex) {
+        int count = 1;
+        for (int i = 0; i < parIndex; i++) {
+            String style = contentArea.getParagraphs().get(i).getParagraphStyle();
+            String ls = CssHelper.getExtractedString(style, "-fx-list-style:");
+            if ("decimal".equals(ls)) {
+                count++;
+            } else if (ls != null) {
+                count = 1;  // other list type breaks the sequence
+            }
+        }
+        return count;
+    }
+
+
+    // ---------------------------------------------------------------
     //  Toolbar: text alignment
     // ---------------------------------------------------------------
 
@@ -928,7 +1058,7 @@ public class Controller implements Initializable, PropertyChangeListener {
     private void handleAbout() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("About NotebookApplication");
-        alert.setHeaderText("NotebookApplication v2.7.5");
+        alert.setHeaderText("NotebookApplication v2.8.0");
 
         Label content = new Label("""
                 A OneNote-like notebook application built with
