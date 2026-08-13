@@ -127,9 +127,7 @@ public class GroupBar extends HBox implements PropertyChangeListener {
         }
     }
 
-    /**
-     * Rebuilds the toggle buttons to reflect the current group order.
-     */
+    /** Rebuilds the toggle buttons to reflect the current group order. */
     private void refreshGroupOrder() {
         // Remove listeners before clearing to prevent memory leaks
         for (var node : getChildren()) {
@@ -158,8 +156,7 @@ public class GroupBar extends HBox implements PropertyChangeListener {
 
     private void updateGroupName(NoteGroup group) {
         for (var node : getChildren()) {
-            if (node instanceof ToggleButton button
-                    && button.getUserData() == group) {
+            if (node instanceof ToggleButton button && button.getUserData() == group) {
                 button.setText(group.getGroupName());
                 break;
             }
@@ -187,20 +184,17 @@ public class GroupBar extends HBox implements PropertyChangeListener {
             deleteItem.setDisable(facade.getGroups().size() <= 1);
         });
 
-        menu.getItems().addAll(renameItem, moveLeftItem, moveRightItem,
-                deleteItem);
+        menu.getItems().addAll(renameItem, moveLeftItem, moveRightItem, deleteItem);
         return menu;
     }
 
     private void renameGroup(NoteGroup group) {
-        TextInputDialog dialog =
-                new TextInputDialog(group.getGroupName());
+        TextInputDialog dialog = new TextInputDialog(group.getGroupName());
         dialog.setTitle("Rename Group");
         dialog.setHeaderText("Enter new group name:");
         dialog.setContentText("Name:");
 
         Optional<String> result = dialog.showAndWait();
-        result.ifPresent(
-                name -> facade.renameGroup(group, name));
+        result.ifPresent(name -> facade.renameGroup(group, name));
     }
 }

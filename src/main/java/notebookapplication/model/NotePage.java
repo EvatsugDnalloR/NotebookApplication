@@ -1,7 +1,6 @@
 package notebookapplication.model;
 
 import java.beans.PropertyChangeSupport;
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
 
@@ -19,8 +18,6 @@ import java.util.UUID;
  */
 public class NotePage extends NoteSubject implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 3L;
     private final UUID id;
     private String pageName;
     private String htmlBodyContent;
@@ -64,9 +61,7 @@ public class NotePage extends NoteSubject implements Serializable {
     public void setPageName(String pageName) {
         String oldTitle = this.pageName;
         this.pageName = pageName;
-        support.firePropertyChange(
-                EventPropertyNameEnum.PAGE_RENAME.getPropertyName(), oldTitle, this.pageName
-        );
+        support.firePropertyChange(EventPropertyNameEnum.PAGE_RENAME.getPropertyName(), oldTitle, this.pageName);
     }
 
     /**
@@ -103,9 +98,7 @@ public class NotePage extends NoteSubject implements Serializable {
     public void setHtmlBody(String html) {
         String oldHtml = this.htmlBodyContent;
         this.htmlBodyContent = html;
-        support.firePropertyChange(
-                EventPropertyNameEnum.SET_CONTENT.getPropertyName(), oldHtml, this.htmlBodyContent
-        );
+        support.firePropertyChange(EventPropertyNameEnum.SET_CONTENT.getPropertyName(), oldHtml, this.htmlBodyContent);
     }
 
     /**
@@ -147,8 +140,7 @@ public class NotePage extends NoteSubject implements Serializable {
     public void fromHtml(String html) {
         String innerHtml = html;
         if (html.startsWith("<div class='note-content'>") && html.endsWith("</div>")) {
-            innerHtml = html.substring("<div class='note-content'>".length(),
-                    html.length() - "</div>".length());
+            innerHtml = html.substring("<div class='note-content'>".length(), html.length() - "</div>".length());
         }
         setHtmlBody(innerHtml);
     }

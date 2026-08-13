@@ -102,9 +102,7 @@ public class PageBar extends VBox implements PropertyChangeListener {
         getChildren().clear();
     }
 
-    /**
-     * Rebuilds the toggle buttons to reflect the current page order.
-     */
+    /** Rebuilds the toggle buttons to reflect the current page order. */
     private void refreshPageOrder() {
         for (NotePage page : currentGroup.getPages()) {
             page.removePropertyChangeListener(this);

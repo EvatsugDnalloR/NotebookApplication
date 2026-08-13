@@ -1,5 +1,6 @@
 package notebookapplication.gui;
 
+import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
@@ -127,8 +128,7 @@ public class ParagraphStyle {
         contentArea.caretPositionProperty().addListener(
                 (_, _, _) -> updateListState());
 
-        contentArea.setParagraphGraphicFactory(
-                this::createParagraphGraphic);
+        contentArea.setParagraphGraphicFactory(this::createParagraphGraphic);
     }
 
     /** Applies a list style to the caret paragraph / selected paragraphs; {@code null} clears the list style. */
@@ -186,9 +186,8 @@ public class ParagraphStyle {
         return true;
     }
 
-    /** Builds the leading graphic for a paragraph: bullet marker,
-     * auto-numbered label, or a clickable checkbox. */
-    private javafx.scene.Node createParagraphGraphic(int parIndex) {
+    /** Builds the leading graphic for a paragraph: bullet marker, auto-numbered label, or a clickable checkbox. */
+    private Node createParagraphGraphic(int parIndex) {
         if (parIndex < 0 || parIndex >= contentArea.getParagraphs().size()) {
             return null;
         }
@@ -229,9 +228,12 @@ public class ParagraphStyle {
     }
 
     /**
-     * Counts the sequence number of a numbered paragraph:
-     *      increments through preceding consecutive decimal paragraphs,
-     *      resets after any non-decimal (or plain) paragraph.
+     * Counts the sequence number of a numbered paragraph.
+     *
+     *  <ul>
+     *    <li>increments through preceding consecutive decimal paragraphs</li>
+     *    <li>resets after any non-decimal (or plain) paragraph</li>
+     *  </ul>
      */
     private int countDecimalBefore(int parIndex) {
         int count = 1;

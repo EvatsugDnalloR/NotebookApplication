@@ -11,6 +11,7 @@ import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory.DoubleSpinnerValueFactory;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.util.StringConverter;
 import notebookapplication.model.NotePage;
 import org.fxmisc.richtext.InlineCssTextArea;
 
@@ -199,7 +200,7 @@ public class FontStyle {
                 8.0, 72.0, DEFAULT_FONT_SIZE, 0.5);
 
         // Fault-tolerant conversion: unparseable input (e.g. "abc") falls back to the current value
-        factory.setConverter(new javafx.util.StringConverter<>() {
+        factory.setConverter(new StringConverter<>() {
             @Override
             public String toString(Double value) {
                 return value == null ? "" : String.valueOf(value);

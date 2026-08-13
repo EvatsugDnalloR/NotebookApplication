@@ -2,7 +2,6 @@ package notebookapplication.model;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -14,8 +13,6 @@ import java.io.Serializable;
  * {@code PropertyChangeSupport} intact.
  */
 public abstract class NoteSubject implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
 
     /** Support for managing property change listeners. */
     protected PropertyChangeSupport support;

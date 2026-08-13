@@ -34,8 +34,7 @@ public class NoteGroup extends NoteSubject implements Serializable {
      * @param groupName the name of the group
      * @param pages     the list of pages in this group
      */
-    public NoteGroup(UUID id, String groupName,
-                     ArrayList<NotePage> pages) {
+    public NoteGroup(UUID id, String groupName, ArrayList<NotePage> pages) {
         this.id = id;
         this.groupName = groupName;
         this.pages = pages;
@@ -58,9 +57,7 @@ public class NoteGroup extends NoteSubject implements Serializable {
     public void setGroupName(String groupName) {
         String oldName = this.groupName;
         this.groupName = groupName;
-        support.firePropertyChange(
-                EventPropertyNameEnum.GROUP_RENAME.getPropertyName(),
-                oldName, this.groupName);
+        support.firePropertyChange(EventPropertyNameEnum.GROUP_RENAME.getPropertyName(), oldName, this.groupName);
     }
 
     public List<NotePage> getPages() {
@@ -74,9 +71,7 @@ public class NoteGroup extends NoteSubject implements Serializable {
      */
     public void addPage(NotePage page) {
         pages.add(page);
-        support.firePropertyChange(
-                EventPropertyNameEnum.ADD_PAGE.getPropertyName(),
-                null, page);
+        support.firePropertyChange(EventPropertyNameEnum.ADD_PAGE.getPropertyName(), null, page);
     }
 
     /**
@@ -86,9 +81,7 @@ public class NoteGroup extends NoteSubject implements Serializable {
      */
     public void removePage(NotePage page) {
         pages.remove(page);
-        support.firePropertyChange(
-                EventPropertyNameEnum.REMOVE_PAGE.getPropertyName(),
-                page, null);
+        support.firePropertyChange(EventPropertyNameEnum.REMOVE_PAGE.getPropertyName(), page, null);
     }
 
     /**
@@ -108,9 +101,7 @@ public class NoteGroup extends NoteSubject implements Serializable {
         }
         pages.remove(idx);
         pages.add(newIdx, page);
-        support.firePropertyChange(
-                EventPropertyNameEnum.MOVE_PAGE.getPropertyName(),
-                idx, newIdx);
+        support.firePropertyChange(EventPropertyNameEnum.MOVE_PAGE.getPropertyName(), idx, newIdx);
     }
 
     /**

@@ -57,13 +57,7 @@ public class NoteFacade extends NoteSubject {
         this.undoRedo = undoRedo;
         this.groups = new ArrayList<>();
         support = new PropertyChangeSupport(this);
-        createDefaultNotebook();
-    }
-
-    /** Creates a default group when initialising the notebook. */
-    private void createDefaultNotebook() {
-        // Bypass UndoRedo for initial default setup
-        NoteGroup defaultGroup = executeCreateGroup();
+        executeCreateGroup();   // creates a default group when initialising the notebook
     }
 
     // ---------------------------------------------------------------
@@ -173,9 +167,7 @@ public class NoteFacade extends NoteSubject {
     public NoteGroup executeCreateGroup() {
         NoteGroup newGroup = new NoteGroup();
         groups.add(newGroup);
-        support.firePropertyChange(
-                EventPropertyNameEnum.ADD_GROUP.getPropertyName(), null,
-                newGroup);
+        support.firePropertyChange(EventPropertyNameEnum.ADD_GROUP.getPropertyName(), null, newGroup);
         switchToGroup(newGroup);
         return newGroup;
     }
@@ -203,9 +195,7 @@ public class NoteFacade extends NoteSubject {
     public void executeRemoveGroup(NoteGroup group) {
         if (groups.size() > 1 && groups.contains(group)) {
             groups.remove(group);
-            support.firePropertyChange(
-                    EventPropertyNameEnum.REMOVE_GROUP.getPropertyName(),
-                    group, null);
+            support.firePropertyChange(EventPropertyNameEnum.REMOVE_GROUP.getPropertyName(), group, null);
             if (currentGroup == group) {
                 switchToGroup(groups.getFirst());
             }
@@ -237,9 +227,7 @@ public class NoteFacade extends NoteSubject {
      */
     public void executeAddGroup(NoteGroup group) {
         groups.add(group);
-        support.firePropertyChange(
-                EventPropertyNameEnum.ADD_GROUP.getPropertyName(), null,
-                group);
+        support.firePropertyChange(EventPropertyNameEnum.ADD_GROUP.getPropertyName(), null, group);
     }
 
     /**
@@ -257,9 +245,7 @@ public class NoteFacade extends NoteSubject {
         }
         groups.remove(idx);
         groups.add(newIdx, group);
-        support.firePropertyChange(
-                EventPropertyNameEnum.MOVE_GROUP.getPropertyName(),
-                idx, newIdx);
+        support.firePropertyChange(EventPropertyNameEnum.MOVE_GROUP.getPropertyName(), idx, newIdx);
     }
 
     /**
@@ -285,9 +271,7 @@ public class NoteFacade extends NoteSubject {
     public void switchToGroup(NoteGroup group) {
         NoteGroup oldGroup = currentGroup;
         currentGroup = group;
-        support.firePropertyChange(
-                EventPropertyNameEnum.SWITCH_TO_GROUP.getPropertyName(),
-                oldGroup, currentGroup);
+        support.firePropertyChange(EventPropertyNameEnum.SWITCH_TO_GROUP.getPropertyName(), oldGroup, currentGroup);
         if (group.getPages().isEmpty()) {
             group.addPage(new NotePage());
         }
@@ -302,9 +286,7 @@ public class NoteFacade extends NoteSubject {
     public void switchToPage(NotePage page) {
         NotePage oldPage = currentPage;
         currentPage = page;
-        support.firePropertyChange(
-                EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName(),
-                oldPage, currentPage);
+        support.firePropertyChange(EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName(), oldPage, currentPage);
     }
 
     // ---------------------------------------------------------------
@@ -318,10 +300,8 @@ public class NoteFacade extends NoteSubject {
      * @throws IOException if an I/O error occurs during saving
      */
     public void saveNotebook(String filePath) throws IOException {
-        try (ObjectOutputStream oos = new ObjectOutputStream(
-                new FileOutputStream(filePath))) {
-            NotebookData data = new NotebookData(groups,
-                    currentGroup.getId(), currentPage.getId());
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            NotebookData data = new NotebookData(groups, currentGroup.getId(), currentPage.getId());
             oos.writeObject(data);
         }
     }
@@ -331,13 +311,10 @@ public class NoteFacade extends NoteSubject {
      *
      * @param filePath the path from where the notebook should be loaded
      * @throws IOException if an I/O error occurs during loading
-     * @throws ClassNotFoundException if the serialized class cannot be
-     *         found
+     * @throws ClassNotFoundException if the serialized class cannot be found
      */
-    public void loadNotebook(String filePath)
-            throws IOException, ClassNotFoundException {
-        try (ObjectInputStream ois =
-                new ObjectInputStream(new FileInputStream(filePath))) {
+    public void loadNotebook(String filePath) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
             NotebookData data = (NotebookData) ois.readObject();
             this.groups.clear();
             this.groups.addAll(data.groups());
@@ -345,25 +322,17 @@ public class NoteFacade extends NoteSubject {
             for (NoteGroup group : groups) {
                 if (group.getId().equals(data.currentGroupId())) {
                     currentGroup = group;
-                    currentPage =
-                            group.getPageById(data.currentPageId());
+                    currentPage = group.getPageById(data.currentPageId());
                     break;
                 }
             }
 
             // Notify UI to rebuild from loaded state
+            support.firePropertyChange(EventPropertyNameEnum.LOAD_NOTEBOOK.getPropertyName(), null, groups);
             support.firePropertyChange(
-                    EventPropertyNameEnum.LOAD_NOTEBOOK
-                            .getPropertyName(),
-                    null, groups);
+                    EventPropertyNameEnum.SWITCH_TO_GROUP.getPropertyName(), null, currentGroup);
             support.firePropertyChange(
-                    EventPropertyNameEnum.SWITCH_TO_GROUP
-                            .getPropertyName(),
-                    null, currentGroup);
-            support.firePropertyChange(
-                    EventPropertyNameEnum.SWITCH_TO_PAGE
-                            .getPropertyName(),
-                    null, currentPage);
+                    EventPropertyNameEnum.SWITCH_TO_PAGE.getPropertyName(), null, currentPage);
         }
     }
 
@@ -383,15 +352,6 @@ public class NoteFacade extends NoteSubject {
         return new ArrayList<>(groups);
     }
 
-    /**
-     * Returns the undo/redo manager used by this facade.
-     *
-     * @return the UndoRedo instance
-     */
-    public UndoRedo getUndoRedo() {
-        return undoRedo;
-    }
-
     // ---------------------------------------------------------------
     //  Helpers
     // ---------------------------------------------------------------
@@ -405,12 +365,8 @@ public class NoteFacade extends NoteSubject {
         return null;
     }
 
-    /**
-     * Helper record for serialization.
-     */
-    private record NotebookData(List<NoteGroup> groups,
-                                UUID currentGroupId,
-                                UUID currentPageId)
+    /** Helper record for serialization. */
+    private record NotebookData(List<NoteGroup> groups, UUID currentGroupId, UUID currentPageId)
             implements Serializable {
     }
 }

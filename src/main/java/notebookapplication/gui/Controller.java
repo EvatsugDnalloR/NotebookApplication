@@ -125,7 +125,6 @@ public class Controller implements Initializable, PropertyChangeListener {
     /** Text colour picker. */
     @FXML private ColorPicker colorPicker;
 
-
     // ---------------------------------------------------------------
     //  FXML paragraph toolbar
     // ---------------------------------------------------------------
@@ -401,8 +400,7 @@ public class Controller implements Initializable, PropertyChangeListener {
             HtmlBridge.populateArea(contentArea, html);
             // Restore the page-level font and update the selector
             String font = currentPage.getFontFamily();
-            fontStyle.applyPageFont(
-                    font != null ? font : FontStyle.DEFAULT_FONT);
+            fontStyle.applyPageFont(font != null ? font : FontStyle.DEFAULT_FONT);
             contentArea.getUndoManager().forgetHistory();
         }
     }
